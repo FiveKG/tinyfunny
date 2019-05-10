@@ -45,98 +45,121 @@ let url = "mongodb://localhost:27017/";
 
 
 class MongoDB{
-  constructor(){
+  constructor()
+  {
     this.result = null;
     this.conn = MongoClient.connect(url, { useNewUrlParser: true }) //返回一个promise
   }
 
   //查，根据id返回一个玩家信息，不输入id则返回所有玩家信息，返回类型为promise,参数为result
 
-  check_player(id,callback_player){
+  check_player(id,callback_player)
+  {
     let filter =null
-    if(id){
+    if(id)
+    {
       filter = {_id:id};
     }
-    else{
+    else
+    {
       filter = {};
     }
-    return this.conn.then(function(db){
-            return db.db('tinyfunny').collection('players').find(filter).toArray();
-          }).then(function(result){
+    return this.conn.then(function(db)
+    {
+        return db.db('tinyfunny').collection('players').find(filter).toArray();})
+        .then(function(result)
+        {
             callback_player(result)
             return result;
-          });
+        });
   }
 
 
   //插入，无返回值
-  insert_player(id,name,sex,pwd){
+  insert_player(id,name,sex,pwd,callback_player)
+  {
     let filter = null;
-    if(id&&name&&sex&&pwd){
+    //填写有错
+    if(id&&name&&sex&&pwd)
+    {
       filter = {_id:id,name:name,sex:sex,pwd:pwd};
     }
-    else{
+    else
+    {
       console.log('填写信息有误')
       return
     }
-    this.conn.then(function(db){
-      db.db('tinyfunny').collection('players').insertOne(filter,function(err,res){
-            if (err) {
-              console.log("更新异常"+err);
-              return err;
-            }
-            console.log("更新结果："+JSON.stringify(res.result));
-          });
+    //插入操作
+    this.conn.then(function(db)
+    {
+      db.db('tinyfunny').collection('players').insertOne(filter,function(err,res)
+      {
+         callback_player(err,res);
+      });
     });
   }
 
   //更新,根据id改名字,无返回值
-  update_player(id,new_name){
+  update_player(id,new_name)
+  {
     let filter = null;
     let update_command = null;
-    if(id&&new_name){
+    if(id&&new_name)
+    {
       filter = {_id:id};
       update_command = {$set:{"name":new_name}}
     }
-    else{
+    else
+    {
       console.log('填写信息有误')
       return
     }
-    this.conn.then(function(db){
-      db.db('tinyfunny').collection('players').updateOne(filter,update_command,function(err,res){
-            if (err) {
-              console.log("更新异常"+err);
-              return err;
-            }
-            console.log("更新结果："+JSON.stringify(res.result));
-          });
+    this.conn.then(function(db)
+    {
+      db.db('tinyfunny').collection('players').updateOne(filter,update_command,function(err,res)
+      {
+          if (err)
+          {
+            console.log("更新异常"+err);
+            return err;
+          }
+          console.log("更新结果："+JSON.stringify(res.result));
+      });
     });
   }
 
   //删除,根据id删除玩家,无返回值
-  delete_player(id){
+  delete_player(id)
+  {
     let filter = null;
-    if(id){
+    if(id)
+    {
       filter = {_id:id};
     }
-    else{
+    else
+    {
       console.log('填写信息有误')
       return
     }
-    this.conn.then(function(db){
-      db.db('tinyfunny').collection('players').deleteOne(filter,function(err,res){
-            if (err) {
-              console.log("删除异常"+err);
-              return err;
-            }
-            console.log("删除结果："+JSON.stringify(res.result));
-          });
+    this.conn.then(function(db)
+    {
+      db.db('tinyfunny').collection('players').deleteOne(filter,function(err,res)
+      {
+          if (err)
+          {
+            console.log("删除异常"+err);
+            return err;
+          }
+          console.log("删除结果："+JSON.stringify(res.result));
+      });
     });
   }
 
   //断开连接
-  close_DB(){
-    this.conn.then(function(db){
+  close_DB()
+  {
+    this.conn.then(function(db)
+    {
       db.close()
     })
   }
@@ -145,11 +168,12 @@ class MongoDB{
 module.exports = MongoDB;
 
 // let mongodb = new MongoDB();
-//查询
-// let player = mongodb.check_player();
-// player.then(function(result){
+// //查询
+// let player = mongodb.check_player(1001,function(result){
 //   console.log(result)
-// })
+// });
+
+
 //插入
 // let player = mongodb.insert_player(1002,"1002","male","123");
 
