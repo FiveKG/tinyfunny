@@ -2,24 +2,25 @@ class Player_pool
 {
     constructor()
     {
-        this.pool = new Map();
+        this.pool = new Map()
     }
-    add_player(port,player_obj)
+    add_player(id,player_obj)
     {
-        this.pool.set(port,player_obj)
+        this.pool.set(id,player_obj)
     }
-    delete_player(port)
+    delete_player(id)
     {
-        this.pool.set(port)
+        this.pool.delete(id)
     }
-    check_player(port)//返回玩家对象
+    get_player(id)//返回玩家对象
     {
-        return this.pool.get(port)
+        return this.pool.get(id)
     }
     check_pool()
     {
+        console.log('玩家池:')
         console.log(this.pool)
     }
 }
 
-module.exports = Player_pool;
+module.exports = Player_pool
