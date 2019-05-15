@@ -4,6 +4,7 @@ class Send_client
     {   
         this.result = {'operate':null,'result':null,'data':null}
     }
+    
     set(operate,result,data)
     {
         this.result['operate']= operate
