@@ -1,9 +1,10 @@
-class Send_server
+class Send_rec_format
 {
     constructor()
     {   
         this.result = {'operate':null,'result':null,'data':null}
     }
+    
     set(operate,result,data)
     {
         this.result['operate']= operate
@@ -15,4 +16,4 @@ class Send_server
         return this.result
     }
 }
-module.exports = Send_server
+module.exports = Send_rec_format

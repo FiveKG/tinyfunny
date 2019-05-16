@@ -1,148 +1,138 @@
 let MongoClient = require('mongodb').MongoClient
 let url = "mongodb://localhost:27017/"
 
-
-// MongoClient.connect(url, { useNewUrlParser: true }, function(err, db) {
-//   if (err){
-//     throw err
-//   }
-//   console.log("数据库已连接!")
-//   let dbase = db.db('tinyfunny')
-//   //插入测试
-//   // let myobj = {_id:1004,name:"1004",sex:"female"}
-//   // dbase.collection("players").insertOne(myobj,function(err,res){
-//   //   if (err) throw err
-//   //   console.log("文档插入成功")
-//   //   db.close()
-//   // })
-
-//   //查看测试
-//   // dbase.collection('players').find({}).toArray(function(err,result){
-//   //   if (err) throw err
-//   //   console.log(result)
-//   //   db.close()
-//   // })
-  
-//   //更新测试
-//   // let filter = {"_id":1001}
-//   // let update_command = {$set:{"name":"1001"}}
-//   // dbase.collection('players').updateOne(filter,update_command,function(err,res){
-//   //   if (err) throw err
-//   //       console.log("文档更新成功")
-//   //       console.log(res.result)
-//   //       db.close()
-//   // })
-
-//   //删除测试
-//   // let filter = {'_id':1004}
-//   // dbase.collection('players').deleteOne(filter,function(err,obj){
-//   //   if (err) throw err
-//   //   console.log(obj.result)
-//   //   db.close()
-//   // })
-//   db.close()
-// })
-
-
 class MongoDB{
-  constructor()
-  {
-    this.result = null
-    this.conn = MongoClient.connect(url, { useNewUrlParser: true }) //返回一个promise
-  }
-
-  //查，根据id返回一个玩家信息，不输入id则返回所有玩家信息，参数为result
-  check_player(id,callback_player)
-  {
-    let filter =null
-    if(id)
+    constructor()
     {
-      id = parseInt(id)
-      filter = {_id:id}
-    }
-    else
-    {
-      filter = {}
-    }
-    this.conn.then(function(db)
-    {
-        db.db('tinyfunny').collection('players').find(filter).toArray(function(err,res)
+        this.mongod_handler = null
+        this.tinyfunnyDB = MongoClient.connect(url, { useNewUrlParser: true })
+        this.conn = MongoClient.connect(url, { useNewUrlParser: true }).then(function(db)
         {
-            callback_player(err,res)
+                return db.db('tinyfunny').collection('players')//返回一个promise
+        }) 
+    }
+    
+    //检查query规则
+    check_query(id,name=null,sex=null,pwd=null)
+    {
+        let query =null
+        if(id)
+        {
+            id = parseInt(id)
+            query = {"_id":id}
+        }
+        if(name)
+        {
+            query["name"]=name
+        }
+        if(sex)
+        {
+            query["sex"]=sex
+        }
+        if(pwd)
+        {
+            query["pwd"]=pwd
+        }
+        return query
+    }
+    operate_mogonDB(opearte,data)
+    {  
+        let that = this
+        switch(opearte)
+        {
+            case opearte =='find_player':
+                let result = this.find_player(data)
+                that.mongod_handler(result)
+                break
+            case opearte =='create_player':
+                this.create_player(data)
+                break
+            default:
+            break
+        }
+
+    }
+
+    //查，根据id返回一个玩家信息，不输入id则返回所有玩家信息，返回promise,参数为[data]
+    async find_player(id)
+    {
+
+        let query = await this.check_query(id)
+        return await this.conn.then(function(db)
+        {
+             return db.findOne(query)
         })
-    })
-  }
+ 
+    }
 
 
-  //插入，无返回值
-  insert_player(id,name,sex,pwd,callback_player)
-  {
-    let filter = {_id:id,name:name,sex:sex,pwd:pwd}
-    //插入操作
-    this.conn.then(function(db)
+    //插入，返回promise，参数res，err
+    async create_player([id,name,sex,pwd])
     {
-      db.db('tinyfunny').collection('players').insertOne(filter,function(err,res)
-      {
-         callback_player(err,res)
-      })
-    })
-  }
+        let query = await this.check_query(id,name,sex,pwd)
 
-  //更新,根据id改名字
-  update_name(id,new_name,callback_player)
-  {
-    let filter = {_id:id}
-    let update_command = {$set:{"name":new_name}}
+        return await this.conn.then(function(db)
+        {
+            return db.insertOne(query)
+        })
+    }
 
-    this.conn.then(function(db)
+    //更新,根据id改名字，返回promise，参数res，err
+    async update_name(id,new_name)
     {
-      db.db('tinyfunny').collection('players').updateOne(filter,update_command,function(err,res)
-      {
-          callback_player(err,res)
-      })
-    })
-  }
+        let query = await this.check_query(id)
+        let update_command = {$set:{"name":new_name}}
 
-  //删除,根据id删除玩家,无返回值
-  delete_player(id,callback_player)
-  {
-    let filter = {_id:id}
-    this.conn.then(function(db)
-    {
-      db.db('tinyfunny').collection('players').deleteOne(filter,function(err,res)
-      {
-          callback_player(err,res)
-      })
-    })
-  }
+        return await this.conn.then(function(db)
+        {
+            return db.updateOne(query,update_command)
+        })
+    }
 
-  //断开连接
-  close_DB()
-  {
-    this.conn.then(function(db)
+    //删除,根据id删除玩家,返回promise，参数res，err
+    async delete_player(id)
     {
-      db.close()
-    })
-  }
+        let query = await this.check_query(id)
+        return await this.conn.then(function(db)
+        {
+            return db.deleteOne(query)
+        })
+    }
+
+    set_handler(handler)
+    {
+        this.mongod_handler = handler
+    }
+
 }
 
 module.exports = MongoDB
 
 // let mongodb = new MongoDB()
 // //查询
-// mongodb.check_player(3732,function(err,res){
-//   console.log(res)
+// let result = mongodb.find_player("1001")
+// result.then(function(res,err)
+// {     
+//     console.log(res)
 // })
 
-
 //插入
-// let player = mongodb.insert_player(1002,"1002","male","123")
-
+// let result = mongodb.create_player(1014,"1014","male","123")
+// result.then(function(err,res)
+// {    
+    
+// })
 
 //更新
-// mongodb.update_player(1001,'1000')
+// let result =mongodb.update_name(1001,'aaaaaa')
+// result.then(function(res,err)
+// {     
+//     console.log(res)
+// })
 
 //删除
-// mongodb.delete_player(1001)
-// mongodb.close_DB()
-
+// let result = mongodb.delete_player("1010")
+// result.then(function(res,err)
+// {     
+//     console.log(res)
+// })

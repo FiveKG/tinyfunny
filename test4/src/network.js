@@ -7,7 +7,7 @@ class Network
         this.port = 8080
         this.host = '127.0.0.1'
         this.socket_handler =null
-
+        
         this.prepare_connect()
     }
     prepare_connect()
@@ -18,26 +18,28 @@ class Network
             function rec_data(data)
             {
                 data = JSON.parse(data)
-                that.socket_handler(data) 
+                that.socket_handler(data,sock) 
             }
             console.log(`${sock.remoteAddress}:${sock.remotePort} Connected`)
             sock.on('data',rec_data)
-    
+            
             //.处理客户端断开连接
             sock.on('close',function()
             {
                 console.log(`${sock.remoteAddress}:${sock.remotePort} Terminated the connection`)
             })
+
             //处理客户端连接异常
             sock.on('error',function(error)
             {
+                that.error_handler(error)
                 console.error(`${sock.remoteAddress}:${sock.remotePort} Connection Error ${error}`)
             })
         })
 
     }
 
-    listener()
+    listen_connect()
     {
         let port =this.port
         let host = this.host
@@ -47,7 +49,7 @@ class Network
         })  
     }
 
-    handler(handler)
+    set_handler(handler)
     {
         this.socket_handler = handler
     }
