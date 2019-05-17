@@ -3,7 +3,7 @@ let Send_rec_format = require('./src/send_rec_format')
 let Player= require('./src/Player')
 let readline = require('readline') 
 let send_rec_obj =new Send_rec_format()
-let my_player =null
+let player =null
 let rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -33,7 +33,7 @@ client.connect(port,host,function()
                 log_out()
                 break
             case 'register':
-                if(my_player)
+                if(player)
                 {
                     console.log('你已登陆!')
                 }
@@ -46,7 +46,7 @@ client.connect(port,host,function()
                 find_player()
                 break
             case 'update_name':
-                if(my_player)
+                if(player)
                 {
                 update_name()
                 }
@@ -56,7 +56,7 @@ client.connect(port,host,function()
                 }
                 break
             case 'delete_player'://删除玩家
-                if(my_player)
+                if(player)
                 {
                     delete_player()
                 }
@@ -64,11 +64,8 @@ client.connect(port,host,function()
                 {
                     console.log('请先登陆')
                 } 
-                break
-            case 'check_log_players' :
-                check_log_players()
-                break
-            case 'close_connect':
+                break 
+            case 'close':
                 client.destroy()
                 break
             default:
@@ -76,13 +73,6 @@ client.connect(port,host,function()
         }
     })
 })
-//查看玩家池
-function check_log_players()
-{
-    send_rec_obj.set('check_log_players',1,null)
-    let send  = send_rec_obj.get()
-    client.write(JSON.stringify(send))
-}
 //登陆
 function log_in()
 {
@@ -108,12 +98,15 @@ function log_in()
 }
 
 //登陆成功
-function log_in_success(player)
+function log_in_success(player_data)
 {   
-    my_player = new Player([player.id,player.name,player.sex,player.pwd])
-    console.log(my_player)
+    let id = player_data['id']
+    let name = player_data['name']
+    let sex = player_data['sex']
+    let pwd = player_data['pwd']
+    player = new Player(id,name,sex,pwd)
     console.log('登陆成功')
-    my_player.toString()
+    player.toString()
 }
 
 //登出
@@ -122,14 +115,14 @@ function log_out()
     console.log("退出yes/no?")
     let rows = 1//控制行数
     let data = []//存储输入的数据
-    rl.on('line',function(line)
-    {
+    rl.on('line',function(line){
         data.push(line)
         //将接下来两行的数据保存在数组并发送到服务端
         if(rows==data.length&&line =="yes")
         {
-            send_rec_obj.set('log_out',1,my_player)
+            send_rec_obj.set('log_out',1,null)
             let send = send_rec_obj.get()
+         
             client.write(JSON.stringify(send))
         }
     })
@@ -186,8 +179,8 @@ function find_player()
 //更新
 function update_name()
 {
-    let rows =2
-    let data = [my_player]//存储输入的数据
+    let rows =1
+    let data = []//存储输入的数据
     console.log('请输入新名字:')
 
     rl.on('line',function(line)
@@ -215,7 +208,7 @@ function delete_player()
         //将接下来两行的数据保存在数组并发送到服务端
         if(rows==data.length&&line =="yes")
         {
-            send_rec_obj.set('delete_player',1,my_player)
+            send_rec_obj.set('delete_player',1,null)
             let send = send_rec_obj.get()
          
             client.write(JSON.stringify(send))
@@ -243,7 +236,7 @@ client.on('data',function(data)
         case 'log_out':
             if(data['result']==1)
             {
-                my_player=null
+                player=null
                 console.log('登出成功')
             }
             break
@@ -268,7 +261,7 @@ client.on('data',function(data)
             if(data['result']==1)
             {
                 console.log(data['data'])
-                my_player=null
+                player=null
             }
             else
             {
@@ -286,13 +279,11 @@ client.on('data',function(data)
 client.on('close',function()
 {   
     rl.close()
-    client.write('close_connect',1,my_player)
    console.log('Connection Closed')
 })
 //Add Error Event Listener 异常捕捉
 client.on('error',function(error){
    console.error(`Connection Error ${error}`) 
-   client.write('close_connect',1,my_player)
 })
 
 rl.on('close', function()
