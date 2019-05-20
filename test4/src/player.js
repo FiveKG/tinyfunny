@@ -26,7 +26,6 @@ class Player
     {
         let that = this
         this.name = new_name[0]
-
         this.save_db(function (err,res)
         {
            
@@ -105,7 +104,7 @@ class Player
     as_db()
     {
         return {
-            _id: this.id,
+
             name: this.name,
             sex: this.sex,
         }

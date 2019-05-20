@@ -33,17 +33,37 @@ client.connect(port,host,function()
                 log_out()
                 break
             case 'register':
-                register()
+                if(player)
+                {
+                    console.log('你已登陆!')
+                }
+                else
+                {
+                    register()
+                } 
                 break
             case 'find_player':
                 find_player()
                 break
             case 'update_name':
+                if(player)
+                {
                 update_name()
+                }
+                else
+                {
+                    console.log('请先登陆')
+                }
                 break
             case 'delete_player'://删除玩家
-                delete_player()
-
+                if(player)
+                {
+                    delete_player()
+                }
+                else
+                {
+                    console.log('请先登陆')
+                } 
                 break 
             case 'close':
                 client.destroy()
@@ -83,7 +103,8 @@ function log_in_success(player_data)
     let id = player_data['id']
     let name = player_data['name']
     let sex = player_data['sex']
-    player = new Player(id,name,sex)
+    let pwd = player_data['pwd']
+    player = new Player(id,name,sex,pwd)
     console.log('登陆成功')
     player.toString()
 }

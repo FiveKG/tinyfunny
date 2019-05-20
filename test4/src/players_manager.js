@@ -9,20 +9,46 @@ class Players_manager
     {
         this.send_rec_obj = new Send_rec_format()
         this.make_id = new Make_id()
-        this.all_account = {}
+        this.all_accounts = {}
 
 
         let network = server.network
         network.set_handler(this.on_data.bind(this))
 
-        //模拟一个用户进内存
-        let account = new Account({'aid':1001,'pwd':'123','player': 6324})
-        this.all_account['1001']=account
+        this.player_db = server.player_db
+        this.account_db = server.account_db
 
+        this.load_accounts()
         
-        this.mongo = server.mongo
-        this.server = server
     }
+
+    load_accounts()
+    {
+        let that = this
+        Account.load_accounts(that.account_db,async function(err,res)
+        {
+            if(err)
+            {
+                console.log(err)
+                throw err
+            }
+
+            function loading()
+            {
+                for(let i=0;i<res.length;i++)
+                {
+                    let _id =res[i]._id
+                    that.all_accounts[_id]=res[i]
+                    console.log(that.all_accounts)
+                }
+            }
+
+            await loading()
+            console.log('account 加载完毕!')
+        })
+    }
+
+
 
     //逻辑业务
     on_data(data, sock)
@@ -83,10 +109,10 @@ class Players_manager
         let [aid, pwd] = id_pwd
         let that = this
 
-        let account = this.all_account[aid]
+        let account = this.all_accounts[aid]
         if(account&&account['pwd']==pwd)
         {
-            this.mongo.find_one({'_id':account.player},function(err,res)
+            this.player_db.find_one({'_id':account.player},function(err,res)
             {
                 if(err)
                 {
@@ -98,7 +124,7 @@ class Players_manager
                 let sex = res.sex
                 
                 //sock和player绑定联系
-                let player = new Player({'id':pid,'name':name,'sex':sex},that.mongo)
+                let player = new Player({'id':pid,'name':name,'sex':sex},that.player_db)
                 sock.player = player
                 player.set_sock(sock)
 
@@ -110,7 +136,7 @@ class Players_manager
             })
         }
     }
-    //注册，成功返回true，失败返回false
+    //注册
     create_player(register_data, sock)
     {
         let that = this
@@ -122,31 +148,37 @@ class Players_manager
         let pwd = register_data[2]
 
         let player_data = { '_id': pid, 'name': name, 'sex': sex,}
-        let account_data = {'aid': aid, 'pwd':pwd, 'player':pid}
+        let account_data = {'_id': aid, 'pwd':pwd, 'player':pid}
 
-        // 创建account
         
-
-        this.mongo.insert(player_data,function(err,res)
+        // 创建account,保存进数据库
+        this.account_db.insert(account_data,function(err,res)
         {
             if (err)
             {
                 console.log(err)
                 throw err
             }
-            if (res)
-            {
-                let account = new Account(account_data)
-                let player = new Player(player_data,that.mongo)
-                that.all_account[account.aid] = account
-                that.send_rec_obj.set('register', 1, account)
-
-                console.log(that.all_account)
-                console.log(`${sock.remoteAddress}:${sock.remotePort} 注册成功`)
-            }
-            let send = that.send_rec_obj.get()
-            sock.write(JSON.stringify(send))
         })
+        // 创建player,保存进数据库
+        this.player_db.insert(player_data,function(err,res)
+        {
+            if(err)
+            {
+                console.log(err)
+                throw err
+            }
+        })
+
+        //把account加载进内存
+        that.all_accounts[account_data._id] = account_data
+        console.log(that.all_accounts)
+        console.log(`${sock.remoteAddress}:${sock.remotePort} 注册成功`)
+        
+        //发包
+        that.send_rec_obj.set('register', 1, account_data)
+        let send = that.send_rec_obj.get()
+        sock.write(JSON.stringify(send))
     }
 }
 

@@ -3,23 +3,23 @@ let url = "mongodb://localhost:27017/"
 
 class MongoDB
 {
-    constructor()
-    {
-        this.mongod_handler = null
-        this.tinyfunnyDB = MongoClient.connect(url, { useNewUrlParser: true })
+    constructor(collection)
+    {   
+        this.collection = collection
+        let that = this
         this.conn = MongoClient.connect(url, { useNewUrlParser: true }).then(function (db)
         {
-            return db.db('tinyfunny').collection('players')//返回一个promise
+            return db.db('tinyfunny').collection(that.collection)//返回一个promise
         })
-
     }
+
 
     // 查询接口
     find(cond, call_back)
     {
         this.conn.then(function (db)
         {
-            let ret = db.find(cond).toArray(call_back)
+           db.find(cond).toArray(call_back)
         })
     }
 
@@ -59,5 +59,4 @@ class MongoDB
         })
     }
 }
-
 module.exports = MongoDB
