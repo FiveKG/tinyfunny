@@ -19,18 +19,16 @@ class MongoDB
     {
         this.conn.then(function (db)
         {
-            let ret = db.find({ "_id": id })
-            call_back(ret)
+            let ret = db.find(cond).toArray(call_back)
         })
     }
 
     //查询单个
-    find_one(id, call_back)
+    find_one(cond, call_back)
     {
         this.conn.then(function (db)
         {
-            db.findOne({ "_id": id })
-            call_back()
+            db.findOne(cond,call_back)
         })
     }
 
@@ -39,8 +37,7 @@ class MongoDB
     {
         this.conn.then(function (db)
         {
-            let ret = db.updateOne(cond, info)
-            call_back(ret)
+            db.updateOne(cond, info,call_back)
         })
     }
 
@@ -49,8 +46,16 @@ class MongoDB
     {
         this.conn.then(function (db)
         {
-            db.deleteOne(cond)
-            call_back()
+            db.deleteOne(cond,call_back)
+        })
+    }
+
+    //添加
+    insert(cond,call_back)
+    {
+        this.conn.then(function(db)
+        {
+            db.insertOne(cond,call_back)
         })
     }
 }

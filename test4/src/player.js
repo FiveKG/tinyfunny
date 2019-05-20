@@ -1,17 +1,18 @@
 let Send_rec_format = require('./send_rec_format')
-let send_rec_obj = new Send_rec_format()
 
 class Player
 {
-    constructor({ id, name, sex, pwd })
+    constructor({ id, name, sex },mongo=null)
     {
         this.id = id
         this.name = name
         this.sex = sex
-        this.pwd = pwd
+        this.mongo = mongo
+        this.send_rec_format = new Send_rec_format()
 
         //登录之后关联的连接
         this.sock = null
+
     }
 
     set_sock(sock)
@@ -19,93 +20,85 @@ class Player
         this.sock = sock
     }
 
-    on_mongoDB(opearte, result)
-    {
-        let sock = this.sock
 
-        let that = this
-        switch (opearte)
-        {
-            case 'find_player':
-                result.then(function (res, err)
-                {
-                    if (err)
-                    {
-                        console.log(err)
-                    }
-                    that.send_sock(sock, opearte, 1, res.player)
-                    console.log(`${sock.remoteAddress}:${sock.remotePort} 查询结果:${res.player}`)
-                })
-                break
-            case 'update_name':
-                result.then(function (res, err)
-                {
-                    if (err)
-                    {
-                        console.log(err)
-                    }
-                    that.send_sock(sock, opearte, 1, res.result)
-                    console.log(`${sock.remoteAddress}:${sock.remotePort} 更改结果:${JSON.stringify(res.result)}`)
-                })
-                break
-            case 'delete_player':
-                result.then(function (res, err)
-                {
-                    if (err)
-                    {
-                        console.log(err)
-                    }
-                    that.send_sock(sock, opearte, 1, res.result)
-                    console.log(`${sock.remoteAddress}:${sock.remotePort} 删除结果:${JSON.stringify(res.result)}`)
-                })
-                break
-            default:
-                break
-        }
-    }
     //@param new_name<array>
     update_name(new_name)
     {
+        let that = this
         this.name = new_name[0]
 
-        this.save_db(function ()
+        this.save_db(function (err,res)
         {
-            //发包
+           
+            if(err)
+            {
+                console.log(err)
+                throw err
+            }
+
+             //发包
+            that.send_sock("update_name",1,'更名成功')
+            console.log(`${that.sock.remoteAddress}:${that.sock.remotePort} 更名成功 `)
+            
         })
     }
 
     //@param  pid<array>
     find_player(pid)
     {
-        mongo.operate_mongoDB('find_player', pid[0], sock)
+        let that = this
+
+        pid = parseInt(pid[0])
+        this.mongo.find_one({_id:pid},function(err,res)
+        {
+            if(err)
+            {
+                console.log(err)
+                throw err
+            }
+            
+            //发包
+            that.send_sock("find_player",1,res)
+            console.log(`${that.sock.remoteAddress}:${that.sock.remotePort} 查找成功 `)
+        })
     }
 
     //@param player<Player>
-    delete_player(sock)
+    delete_player()
     {
-        mongo.operate_mongoDB('delete_player', this, sock)
+        //删除自己的player
+        let that = this
+        
+        this.mongo.delete({_id:this.id},function(err,res){
+            if(err)
+            {
+                console.log(err)
+                throw err
+            }
+            //发包
+            that.send_sock("delete_player",1,'删除成功')
+            console.log(`${that.sock.remoteAddress}:${that.sock.remotePort} 删除成功 `)
+
+            //退出登陆
+            that.log_out() 
+        })
     }
 
     //@param player<Player>
-    log_out(sock)
+    log_out()
     {
-        delete this.sock
-
-        this.send_sock(sock, 'log_out', 1, null)
-        console.log(`${sock.remoteAddress}:${sock.remotePort} 登出成功 `)
+        this.send_sock('log_out', 1, null)
+        console.log(`${this.sock.remoteAddress}:${this.sock.remotePort} 登出成功 `)
+        delete this
     }
 
-    // operate_mongoDB(operate,data)
-    // {
-    //     mongo.operate_mongoDB(operate,data)
-    // }
 
 
-    send_sock(sock, ...args)
+    send_sock(...args)
     {
-        send_rec_obj.set(args[0], args[1], args[2])
-        let send = send_rec_obj.get()
-        sock.write(JSON.stringify(send))
+        this.send_rec_format.set(args[0], args[1], args[2])
+        let send = this.send_rec_format.get()
+        this.sock.write(JSON.stringify(send))
     }
 
     //序列化
@@ -122,33 +115,10 @@ class Player
     save_db(call_back)
     {
         let db = this.as_db()
-        mongo.update({ _id: this.id }, { $set: { "player": db } }, call_back)
+        this.mongo.update({ _id: this.id }, { $set: db }, call_back)
     }
+
+
 
 }
 module.exports = Player
-
-
-account 账号角色
-{
-    id: 1 //
-    pwd: 1234//
-    player: xx
-}
-
-=>
-{
-    id: 1, pwd : 1234, player: 1
-}
-
-player 游戏角色
-{
-    pid: 1
-    name: "xxx"
-}
-
-=>
-{
-    id: 1, name: "xxx"
-}
-

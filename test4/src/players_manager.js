@@ -1,7 +1,7 @@
 let Player = require('./player')
 let Make_id = require('./make_id')
 let Send_rec_format = require('./send_rec_format')
-
+let Account = require('./account')
 
 class Players_manager
 {
@@ -9,16 +9,18 @@ class Players_manager
     {
         this.send_rec_obj = new Send_rec_format()
         this.make_id = new Make_id()
-
+        this.all_account = {}
 
 
         let network = server.network
         network.set_handler(this.on_data.bind(this))
 
-        // let mongoDB = server.mongoDB
-        // mongoDB.set_handler(this.on_mongoDB.bind(this))
+        //模拟一个用户进内存
+        let account = new Account({'aid':1001,'pwd':'123','player': 6324})
+        this.all_account['1001']=account
 
-        this.mongoDB = server.mongoDB
+        
+        this.mongo = server.mongo
         this.server = server
     }
 
@@ -45,27 +47,21 @@ class Players_manager
         if (sock.player)
         {
             let player = sock.player
-            // let operate = data.operate
-
-            // let func = player[operate]
-            // func(sock, data)
-
+            
             switch (data['operate'])
             {
                 case 'find_player':
-                    player.find_player(data['data'], sock)
+                    player.find_player(data['data'])
                     break
                 case 'delete_player':
-                    player.delete_player(sock)
+                    player.delete_player()
                     break
                 case 'log_out':
-
                     delete sock.player
-                    player.log_out(sock)
-
+                    player.log_out()
                     break
                 case 'update_name':
-                    player.update_name(data['data'], sock)
+                    player.update_name(data['data'])
                     break
                 default:
                     break;
@@ -78,86 +74,80 @@ class Players_manager
     {
         //序列化
         let db = player.as_db()
-
         mongo.update({ _id: player.pid }, db)
+
     }
 
     log_in(id_pwd, sock)
     {
-        let [pid, pwd] = id_pwd
+        let [aid, pwd] = id_pwd
         let that = this
 
-        let result = this.mongoDB.find_player(pid)
-        result.then(function (res, err)
+        let account = this.all_account[aid]
+        if(account&&account['pwd']==pwd)
         {
-            if (err)
+            this.mongo.find_one({'_id':account.player},function(err,res)
             {
-                that.send_rec_obj.set('log_in', 0, "登陆失败")
-                console.log(err)
-            }
-            if (res)
-            {
-                let player_data = res.player
-                //player_data = JSON.parse(player_data)
-
-                if (player_data.pwd == pwd)
+                if(err)
                 {
-                    //建立连接
-                    let player = new Player(player_data)
-                    sock.player = player
-                    player.set(sock)
-
-                    that.send_rec_obj.set('log_in', 1, player)
-                    console.log(`${sock.remoteAddress}:${sock.remotePort} 登陆成功`)
+                    console.log(err)
+                    throw err
                 }
-                else
-                {
-                    that.send_rec_obj.set('log_in', 0, "密码错误")
-                }
+                let pid = res._id
+                let name = res.name
+                let sex = res.sex
+                
+                //sock和player绑定联系
+                let player = new Player({'id':pid,'name':name,'sex':sex},that.mongo)
+                sock.player = player
+                player.set_sock(sock)
 
-            }
-            else
-            {
-                that.send_rec_obj.set('log_in', 0, "未注册")
-            }
+                console.log(`${sock.remoteAddress}:${sock.remotePort} 登陆成功`)
 
-            let send = that.send_rec_obj.get()
-            sock.write(JSON.stringify(send))
-        })
+                that.send_rec_obj.set('log_in', 1, {'id':pid,'name':name,'sex':sex})
+                let send = that.send_rec_obj.get()
+                sock.write(JSON.stringify(send))
+            })
+        }
     }
     //注册，成功返回true，失败返回false
     create_player(register_data, sock)
     {
         let that = this
         //整理数据
-        let pid = this.make_id.get_id()
+        let pid= this.make_id.get_id()
+        let aid = this.make_id.get_id()
+        let name  = register_data[0]
+        let sex = register_data[1]
+        let pwd = register_data[2]
 
-        let player_data = { 'id': pid, 'name': register_data[0], 'sex': register_data[1], 'pwd': register_data[2] }
+        let player_data = { '_id': pid, 'name': name, 'sex': sex,}
+        let account_data = {'aid': aid, 'pwd':pwd, 'player':pid}
 
-        //创建玩家，放进mongodb
-        let player = new Player(player_data)
+        // 创建account
+        
 
-        let result = this.mongoDB.create_player(player)
-
-        result.then(function (res, err)
+        this.mongo.insert(player_data,function(err,res)
         {
             if (err)
             {
-                that.send_rec_obj.set('register', 0, "注册失败")
                 console.log(err)
+                throw err
             }
             if (res)
             {
-                console.log(res.ops)
+                let account = new Account(account_data)
+                let player = new Player(player_data,that.mongo)
+                that.all_account[account.aid] = account
+                that.send_rec_obj.set('register', 1, account)
+
+                console.log(that.all_account)
                 console.log(`${sock.remoteAddress}:${sock.remotePort} 注册成功`)
-                that.send_rec_obj.set('register', 1, player)
             }
             let send = that.send_rec_obj.get()
             sock.write(JSON.stringify(send))
         })
     }
-
-
 }
 
 module.exports = Players_manager

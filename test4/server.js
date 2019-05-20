@@ -6,6 +6,7 @@ class Server
 {
     constructor()
     {
+
         this.mongo = new MongoDB()
         this.network = new Network();
         this.players_manager = new Players_manager(this);
