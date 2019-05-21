@@ -1,46 +1,44 @@
 let Player = require('./player')
-let Send_rec_format = require('./send_rec_format')
 
 class Players_manager
 {
     constructor(server)
     {
-        this.send_rec_obj = new Send_rec_format()
-        this.all_accounts = {}
-
-        this.cur_max_pid = null
+        //this.all_accounts = {}
+        //this.cur_max_pid = null
 
         let network = server.network
-        network.set_handler(this.on_data.bind(this))
+        network.set_player_handler(this.on_data.bind(this))
 
+        this.send_rec_obj = server.send_rec_obj
         this.mongo = server.mongo
-        this.load_accounts()
-        this.load_max_pid()
+        //this.load_accounts()
+        //this.load_max_pid()
     }
     //获取id
-    async load_max_pid()
-    {
-        let that = this
-        let res =await this.mongo.find('max_pid', {})
+    // async load_max_pid()
+    // {
+    //     let that = this
+    //     let res =await this.mongo.find('max_pid', {})
 
-        that.cur_max_pid = res[0].pid
-    }
+    //     that.cur_max_pid = res[0].pid
+    // }
 
     //加载
-    async load_accounts()
-    {
-        let that = this
-        let res = await this.mongo.load("accounts", {})
+    // async load_accounts()
+    // {
+    //     let that = this
+    //     let res = await this.mongo.load("accounts", {})
 
-        for (let i = 0; i < res.length; i++)
-        {
-            let _id = res[i]._id
-            that.all_accounts[_id] = res[i]
-        }
+    //     for (let i = 0; i < res.length; i++)
+    //     {
+    //         let _id = res[i]._id
+    //         that.all_accounts[_id] = res[i]
+    //     }
 
-        console.log(that.all_accounts)
-        console.log('accounts 加载完毕!')
-    }
+    //     console.log(that.all_accounts)
+    //     console.log('accounts 加载完毕!')
+    // }
 
 
 
@@ -48,20 +46,20 @@ class Players_manager
     on_data(data, sock)
     {
         //没有登陆的状态
-        if (!sock.player)
-        {
-            switch (data['operate'])
-            {
-                case 'register':
-                    this.create_player(data['data'], sock)
-                    break
-                case 'log_in':
-                    this.log_in(data['data'], sock)
-                    break
-                default:
-                    break;
-            }
-        }
+        // if (!sock.player)
+        // {
+        //     switch (data['operate'])
+        //     {
+        //         case 'register':
+        //             this.create_player(data['data'], sock)
+        //             break
+        //         case 'log_in':
+        //             this.log_in(data['data'], sock)
+        //             break
+        //         default:
+        //             break;
+        //     }
+        // }
 
         //登陆阶段
         if (sock.player)
@@ -93,13 +91,13 @@ class Players_manager
 
     async log_in(id_pwd, sock)
     {
-        let [aid, pwd] = id_pwd
         let that = this
 
-        let account = this.all_accounts[aid]
-        if (account && account['pwd'] == pwd)
+        if (sock.account)
         {
-            let res= await this.mongo.find_one('players', { '_id': account.player })
+            let id = parseInt(sock.account.player)
+            let res= await this.mongo.find_one('players', { '_id': id })
+
 
             let pid = res._id
             let name = res.name
@@ -119,51 +117,51 @@ class Players_manager
         }
     }
 
-    //注册
-    async create_player(register_data, sock)
-    {
-        let that = this
-        //整理数据
+    // //注册
+    // async create_player(register_data, sock)
+    // {
+    //     let that = this
+    //     //整理数据
 
-        let pid = this.cur_max_pid += 1
-        let aid = pid
+    //     let pid = this.cur_max_pid += 1
+    //     let aid = pid
 
-        let name = register_data[0]
-        let sex = register_data[1]
-        let pwd = register_data[2]
+    //     let name = register_data[0]
+    //     let sex = register_data[1]
+    //     let pwd = register_data[2]
 
-        let player_data = { '_id': pid, 'name': name, 'sex': sex, }
-        let account_data = { '_id': aid, 'pwd': pwd, 'player': pid }
+    //     let player_data = { '_id': pid, 'name': name, 'sex': sex, }
+    //     let account_data = { '_id': aid, 'pwd': pwd, 'player': pid }
 
-        try
-        {
-            // 创建account,保存进数据库
-            await this.mongo.insert('accounts', account_data)
+    //     try
+    //     {
+    //         // 创建account,保存进数据库
+    //         await this.mongo.insert('accounts', account_data)
 
-            // 创建player,保存进数据库
-            await this.mongo.insert('players', player_data)
+    //         // 创建player,保存进数据库
+    //         await this.mongo.insert('players', player_data)
 
 
-            //更新num数字
-            await this.mongo.update('max_pid', { _id: "get_pid" }, { $set: { pid: pid }})
-        }
-        catch(err)
-        {
-            console.log(err)
-        }
+    //         //更新num数字
+    //         await this.mongo.update('max_pid', { _id: "get_pid" }, { $set: { pid: pid }})
+    //     }
+    //     catch(err)
+    //     {
+    //         console.log(err)
+    //     }
         
 
 
-        //把account加载进内存
-        that.all_accounts[account_data._id] = account_data
-        console.log(that.all_accounts)
-        console.log(`${sock.remoteAddress}:${sock.remotePort} 注册成功`)
+    //     //把account加载进内存
+    //     that.all_accounts[account_data._id] = account_data
+    //     console.log(that.all_accounts)
+    //     console.log(`${sock.remoteAddress}:${sock.remotePort} 注册成功`)
 
-        //发包
-        that.send_rec_obj.set('register', 1, account_data)
-        let send = that.send_rec_obj.get()
-        sock.write(JSON.stringify(send))
-    }
+    //     //发包
+    //     that.send_rec_obj.set('register', 1, account_data)
+    //     let send = that.send_rec_obj.get()
+    //     sock.write(JSON.stringify(send))
+    // }
 }
 
 module.exports = Players_manager

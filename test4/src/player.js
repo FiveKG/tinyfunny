@@ -42,8 +42,12 @@ class Player
                 console.log(err)
             }
         }
+        else
+        {
+            that.send_sock("update_name",0,'名字不能为空')
+
+        }
         
-        that.send_sock("update_name",0,'名字不能为空')
     }
 
     //@param  pid<array>

@@ -7,7 +7,8 @@ class Network
     {   
         this.port = 8080
         this.host = '127.0.0.1'
-        this.socket_handler =null//for players_manager
+        this.account_socket_handler =null//for players_manager
+        this.player_socket_handler =null //for accounts_manager
         this.prepare_connect()
     }
     prepare_connect()
@@ -17,10 +18,13 @@ class Network
         {
             sock.player = null
             sock.account = null
-            function rec_data(data)
+            async function rec_data(data)
             {
                 data = JSON.parse(data)
-                that.socket_handler(data,sock) 
+                //先发account，后发player
+                await that.account_socket_handler(data,sock) 
+                await that.player_socket_handler(data,sock)
+                
             }
             console.log(`${sock.remoteAddress}:${sock.remotePort} Connected`)
             sock.on('data',rec_data)
@@ -50,9 +54,14 @@ class Network
         })  
     }
 
-    set_handler(handler)
+    set_account_handler(handler)
     {
-        this.socket_handler = handler
+        this.account_socket_handler = handler
+    }
+
+    set_player_handler(handler)
+    {
+        this.player_socket_handler = handler
     }
 
 }
