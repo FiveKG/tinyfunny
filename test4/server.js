@@ -1,15 +1,14 @@
 let Players_manager = require('./src/players_manager')
 let Network = require('./src/network')
-let MongoDB = require('./src/mongoDB')
+let MongoDB = require('./src/mongo')
 
 class Server
 {
     constructor()
     {
-        this.mongoDB = new MongoDB()
-        this.network = new Network();
-        this.players_manager = new Players_manager(this);
-        
+        this.mongo = new MongoDB()
+        this.network = new Network()
+        this.players_manager = new Players_manager(this)
     }
 
     listen_connect()

@@ -1,13 +1,13 @@
 let net = require('net')
 
+
 class Network
 {
     constructor()
     {   
         this.port = 8080
         this.host = '127.0.0.1'
-        this.socket_handler =null
-        
+        this.socket_handler =null//for players_manager
         this.prepare_connect()
     }
     prepare_connect()
@@ -15,6 +15,8 @@ class Network
         let that = this
         this.server=net.createServer(function(sock)
         {
+            sock.player = null
+            sock.account = null
             function rec_data(data)
             {
                 data = JSON.parse(data)
@@ -32,7 +34,6 @@ class Network
             //处理客户端连接异常
             sock.on('error',function(error)
             {
-                that.error_handler(error)
                 console.error(`${sock.remoteAddress}:${sock.remotePort} Connection Error ${error}`)
             })
         })
