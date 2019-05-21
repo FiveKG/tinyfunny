@@ -1,62 +1,78 @@
-let MongoClient = require('mongodb').MongoClient
+let MongoClient = require('mongodb')
 let url = "mongodb://localhost:27017/"
 
 class MongoDB
 {
-    constructor(collection)
-    {   
-        this.collection = collection
-        let that = this
-        this.conn = MongoClient.connect(url, { useNewUrlParser: true }).then(function (db)
+    constructor()
+    {        
+        this.db = this.init()
+    }
+
+    async init()
+    {
+        let client =await MongoClient.connect(url,{ useNewUrlParser: true })
+        let db=await client.db('tinyfunny')
+        //let data =await this.db.collection("accounts").find({}).toArray()
+        return db
+    }
+
+    load(collention_name,cond)
+    {
+        
+        return this.db.then(function(db)
         {
-            return db.db('tinyfunny').collection(that.collection)//返回一个promise
+            let result = db.collection(collention_name).find(cond).toArray()
+            return result
         })
     }
 
 
+
     // 查询接口
-    find(cond, call_back)
+    find(collention_name,cond)
     {
-        this.conn.then(function (db)
+        return this.db.then(async function(db)
         {
-           db.find(cond).toArray(call_back)
+            return db.collection(collention_name).find(cond).toArray()
         })
     }
 
     //查询单个
-    find_one(cond, call_back)
+    find_one(collention_name,cond)
     {
-        this.conn.then(function (db)
+        return this.db.then(function(db)
         {
-            db.findOne(cond,call_back)
+            return db.collection(collention_name).findOne(cond)
         })
     }
 
     //修改 
-    update(cond, info, call_back)
+    update(collention_name,cond, info)
     {
-        this.conn.then(function (db)
+        return this.db.then(function (db)
         {
-            db.updateOne(cond, info,call_back)
+            return db.collection(collention_name).updateOne(cond, info)
         })
     }
 
     //删除
-    delete(cond, call_back)
+    delete(collention_name,cond)
     {
-        this.conn.then(function (db)
+        return this.db.then(function (db)
         {
-            db.deleteOne(cond,call_back)
+            return db.collection(collention_name).deleteOne(cond)
         })
     }
 
     //添加
-    insert(cond,call_back)
+    insert(collention_name,cond)
     {
-        this.conn.then(function(db)
-        {
-            db.insertOne(cond,call_back)
+        return this.db.then(function(db)
+        { 
+            return db.collection(collention_name).insertOne(cond)
         })
     }
 }
+
+
 module.exports = MongoDB

@@ -22,69 +22,72 @@ class Player
 
 
     //@param new_name<array>
-    update_name(new_name)
+    async update_name(new_name)
     {
         let that = this
         this.name = new_name[0]
-        this.save_db(function (err,res)
-        {
-           
-            if(err)
-            {
-                console.log(err)
-                throw err
-            }
 
-             //发包
+        let db = this.as_db()
+        try
+        {
+            await this.mongo.update('players',{ _id: this.id }, { $set: db })
+
+            //发包
             that.send_sock("update_name",1,'更名成功')
             console.log(`${that.sock.remoteAddress}:${that.sock.remotePort} 更名成功 `)
-            
-        })
+        }
+        catch(err)
+        {
+            console.log(err)
+        }
     }
 
     //@param  pid<array>
-    find_player(pid)
+    async find_player(pid)
     {
         let that = this
-
         pid = parseInt(pid[0])
-        this.mongo.find_one({_id:pid},function(err,res)
+
+        try
         {
-            if(err)
-            {
-                console.log(err)
-                throw err
-            }
-            
+            let res = await this.mongo.find_one('players',{_id:pid})
             //发包
             that.send_sock("find_player",1,res)
             console.log(`${that.sock.remoteAddress}:${that.sock.remotePort} 查找成功 `)
-        })
+        }
+        catch(err)
+        {
+            console.log(err)
+        }
+
+        
+        
     }
 
     //@param player<Player>
-    delete_player()
+    async delete_player()
     {
         //删除自己的player
         let that = this
         
-        this.mongo.delete({_id:this.id},function(err,res){
-            if(err)
-            {
-                console.log(err)
-                throw err
-            }
+        try
+        {
+            await this.mongo.delete('players',{_id:this.id},)
+
             //发包
             that.send_sock("delete_player",1,'删除成功')
             console.log(`${that.sock.remoteAddress}:${that.sock.remotePort} 删除成功 `)
-
-            //退出登陆
-            that.log_out() 
-        })
+        }
+        catch(err)
+        {
+            console.log(err)
+        }    
+        //退出登陆
+        that.log_out() 
     }
 
     //@param player<Player>
-    log_out()
+    async log_out()
     {
         this.send_sock('log_out', 1, null)
         console.log(`${this.sock.remoteAddress}:${this.sock.remotePort} 登出成功 `)
@@ -104,20 +107,9 @@ class Player
     as_db()
     {
         return {
-
             name: this.name,
             sex: this.sex,
         }
     }
-
-    //保存player到数据库
-    save_db(call_back)
-    {
-        let db = this.as_db()
-        this.mongo.update({ _id: this.id }, { $set: db }, call_back)
-    }
-
-
-
 }
 module.exports = Player
