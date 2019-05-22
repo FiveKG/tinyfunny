@@ -8,7 +8,7 @@ class Player
         this.name = name
         this.sex = sex
         this.mongo = mongo
-        this.send_rec_format = new Send_rec_format()
+        this.send_rec_obj = new Send_rec_format()
 
         //登录之后关联的连接
         this.sock = null
@@ -26,27 +26,35 @@ class Player
     {
         let that = this
         this.name = new_name[0]
-
-        let db = this.as_db()
-        try
+        if(this.name)
         {
-            await this.mongo.update('players',{ _id: this.id }, { $set: db })
+            let db = this.as_db()
+            try
+            {
+                await this.mongo.update('players',{ _id: this.id }, { $set: db })
 
-            //发包
-            that.send_sock("update_name",1,'更名成功')
-            console.log(`${that.sock.remoteAddress}:${that.sock.remotePort} 更名成功 `)
+                //发包
+                that.send_sock("update_name",1,'更名成功')
+                console.log(`${that.sock.remoteAddress}:${that.sock.remotePort} 更名成功 `)
+            }
+            catch(err)
+            {
+                console.log(err)
+            }
         }
-        catch(err)
+        else
         {
-            console.log(err)
+            that.send_sock("update_name",0,'名字不能为空')
+
         }
+        
     }
 
     //@param  pid<array>
     async find_player(pid)
     {
         let that = this
-        pid = parseInt(pid[0])
+        pid = Number.parseInt(pid[0])
 
         try
         {
@@ -60,46 +68,38 @@ class Player
             console.log(err)
         }
 
-        
-        
+    }
+
+    log_out()
+    {
+        this.set_sock(null)
+        this.sock.player = null
     }
 
     //@param player<Player>
     async delete_player()
     {
-        //删除自己的player
-        let that = this
-        
         try
         {
             await this.mongo.delete('players',{_id:this.id},)
-
-            //发包
-            that.send_sock("delete_player",1,'删除成功')
-            console.log(`${that.sock.remoteAddress}:${that.sock.remotePort} 删除成功 `)
         }
         catch(err)
         {
             console.log(err)
+            return 
         }    
-        //退出登陆
-        that.log_out() 
+
+        //发包
+        this.send_sock("delete_player",1,'删除成功')
+        console.log(`${this.sock.remoteAddress}:${this.sock.remotePort} 删除成功 `)
+
+        this.log_out()
     }
-
-    //@param player<Player>
-    async log_out()
-    {
-        this.send_sock('log_out', 1, null)
-        console.log(`${this.sock.remoteAddress}:${this.sock.remotePort} 登出成功 `)
-        delete this
-    }
-
-
 
     send_sock(...args)
     {
-        this.send_rec_format.set(args[0], args[1], args[2])
-        let send = this.send_rec_format.get()
+        this.send_rec_obj.set(args[0], args[1], args[2])
+        let send = this.send_rec_obj.get()
         this.sock.write(JSON.stringify(send))
     }
 

@@ -33,38 +33,20 @@ client.connect(port,host,function()
                 log_out()
                 break
             case 'register':
-                if(player)
-                {
-                    console.log('你已登陆!')
-                }
-                else
-                {
-                    register()
-                } 
+                register()
                 break
             case 'find_player':
                 find_player()
                 break
             case 'update_name':
-                if(player)
-                {
                 update_name()
-                }
-                else
-                {
-                    console.log('请先登陆')
-                }
                 break
             case 'delete_player'://删除玩家
-                if(player)
-                {
-                    delete_player()
-                }
-                else
-                {
-                    console.log('请先登陆')
-                } 
+                delete_player()
                 break 
+            case 'create_player':
+                create_player()
+                break
             case 'close':
                 client.destroy()
                 break
@@ -97,6 +79,29 @@ function log_in()
     })
 }
 
+function create_player()
+{
+    let rows =2
+    let data = []//存储输入的数据
+    console.log('请输入名称:')
+    rl.on('line',function(line)
+    {
+        //将接下来的数据保存在数组并发送到服务端
+        data.push(line)
+        if(data.length == 1)
+        {
+            console.log('请输入性别(female/male):')
+        }
+        
+        if(data.length ==rows)
+        {
+            //转载发送
+            send_rec_obj.set('create_player',1,data)
+            let send  = send_rec_obj.get()
+            client.write(JSON.stringify(send))
+        }
+    })
+}
 //登陆成功
 function log_in_success(player_data)
 {   
@@ -267,6 +272,8 @@ client.on('data',function(data)
             {
                 console.log(data['data'])
             }
+        case 'create_player':
+            console.log(data['data'])
             break
         default:
             break
