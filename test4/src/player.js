@@ -72,8 +72,9 @@ class Player
 
     log_out()
     {
-        this.set_sock(null)
         this.sock.player = null
+        this.set_sock(null)
+
     }
 
     //@param player<Player>

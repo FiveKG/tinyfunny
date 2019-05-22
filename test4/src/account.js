@@ -23,8 +23,9 @@ class Account
         //断开联系
         this.send_sock('log_out',1,'登出成功')
         console.log(`${this.sock.remoteAddress}:${this.sock.remotePort} 登出成功 `)
-        this.set_sock(null)
+        
         this.sock.account = null
+        this.set_sock(null)
     }
 
     

@@ -4,61 +4,20 @@ class Players_manager
 {
     constructor(server)
     {
-        let network = server.network
-        network.set_player_handler(this.on_data.bind(this))
-        this.sock = null
+        this.cur_max_aid = null
 
         this.send_rec_obj = server.send_rec_obj
         this.mongo = server.mongo
 
-        this.server = server
+        this.load_max_pid()
     }
 
-
-    //逻辑业务
-    on_data(data, sock)
-    {
-        this.sock = sock
-        //没有登陆的状态
-        if (!sock.player)
-        {
-            switch (data['operate'])
-            {
-                case 'log_in':
-                    this.log_in(sock)
-                    break
-                case 'create_player':
-                    this.create_player(data['data'],sock)
-                    break
-                default:
-                    break;
-            }
-        }
-
-        //登陆阶段
-        if (sock.player)
-        {
-            let player = sock.player
-
-            switch (data['operate'])
-            {
-                case 'find_player':
-                    player.find_player(data['data'])
-                    break
-                case 'delete_player':
-                    player.delete_player()
-                    break
-                case 'update_name':
-                    player.update_name(data['data'])
-                    break
-                case 'log_out':
-                    player.log_out()
-                default:
-                    break;
-            }
-        }
-
-    }
+     //获取id
+     async load_max_pid()
+     {
+         let res =await this.mongo.find('max_pid', {})
+         this.cur_max_pid = res[0].pid
+     }
 
 
     async log_in(sock)
@@ -82,7 +41,7 @@ class Players_manager
                     player.set_sock(sock)
 
                     //发包
-                    this.send_sock('log_in', 1, { 'id': pid, 'name': name, 'sex': sex })
+                    this.send_sock(sock,'log_in', 1, { 'id': pid, 'name': name, 'sex': sex })
                 }
                 catch(err)
                 {
@@ -92,7 +51,7 @@ class Players_manager
             else
             {
                 console.log(`${sock.remoteAddress}:${sock.remotePort} player为null`)
-                this.send_sock('log_in', 0, '玩家为空')
+                this.send_sock(sock,'log_in', 0, '玩家为空')
                 return
             }
             
@@ -101,16 +60,16 @@ class Players_manager
 
     async create_player(player_data,sock)
     {   
-
+        let pid = this.cur_max_pid += 1
         let[name,sex] = player_data
-
-        let pid = sock.account.id
+        console.log(name,sex)
 
         let player = new Player({id:pid,name:name,sex:sex},this.mongo)
         sock.player = player
         player.set_sock(sock)
         
         let palyer_data = { '_id': pid, 'name': name, 'sex': sex}
+
         try
         {
             await this.mongo.insert('players', palyer_data)
@@ -123,14 +82,14 @@ class Players_manager
 
         console.log(`${sock.remoteAddress}:${sock.remotePort} 创建玩家`)
         //发包
-        this.send_sock('create_player',1,'创建玩家成功')
+        this.send_sock(sock,'create_player',1,'创建玩家成功')
     }
 
-    send_sock(...args)
+    send_sock(sock,...args)
     {
         this.send_rec_obj.set(args[0], args[1], args[2])
         let send = this.send_rec_obj.get()
-        this.sock.write(JSON.stringify(send))
+        sock.write(JSON.stringify(send))
     }
 
 }

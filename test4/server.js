@@ -11,9 +11,63 @@ class Server
         this.send_rec_obj = new Send_rec_format()
         this.mongo = new MongoDB()
         this.network = new Network()
-        this.account_manager = new Account_manager(this)
+        this.network.set_handler(this.on_data.bind(this))
+        this.accounts_manager = new Account_manager(this)
         this.players_manager = new Players_manager(this)
+
         
+        
+    }
+    on_data(data, sock)
+    {
+         //没有登陆的状态
+         if (!sock.account)
+        {
+            switch (data['operate'])
+            {
+                case 'register':
+                    this.accounts_manager.create_account(data['data'], sock)
+                    this.players_manager.create_player(data['data'], sock)
+                    break
+                case 'log_in':
+                    this.accounts_manager.log_in(data['data'], sock)
+                    this.players_manager.log_in(sock)
+                    break
+                default:
+                    break;
+            }
+        }
+
+        //登陆阶段
+        if (sock.account)
+        {
+            let account = sock.account
+            let player = sock.player
+
+            switch (data['operate'])
+            {
+                case 'delete_player':
+                    account.update_account('delete_player')
+                    player.delete_player()
+                    break
+                case 'create_player':
+                    this.players_manager.create_player(data['data'],sock)
+                    account.update_account('create_player',account.id)
+                    break
+                case 'log_out':
+                    player.log_out()
+                    account.log_out()
+                    break
+                case 'find_player':
+                    player.find_player(data['data'])
+                    break
+                case 'update_name':
+                    player.update_name(data['data'])
+                    break
+                default:
+                    break;
+            }
+        }
     }
 
     listen_connect()

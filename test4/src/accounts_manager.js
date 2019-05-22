@@ -3,106 +3,106 @@ class Account_manager
 {
     constructor(server)
     {
-        this.cur_max_pid = null
+        this.cur_max_aid = null
         this.all_accounts = {}
-
-        let network = server.network
-        network.set_account_handler(this.on_data.bind(this))
 
         this.send_rec_obj = server.send_rec_obj
 
         this.mongo = server.mongo
         this.sock = null
         this.load_accounts()
-        this.load_max_pid()
+        this.load_max_aid()
     }
 
      //获取id
-     async load_max_pid()
+     async load_max_aid()
      {
-         let that = this
          let res =await this.mongo.find('max_pid', {})
- 
-         that.cur_max_pid = res[0].pid
+         this.cur_max_aid = res[0].aid
      }
  
      //加载
      async load_accounts()
      {
-         let that = this
+
          let res = await this.mongo.load("accounts", {})
  
          for (let i = 0; i < res.length; i++)
          {
              let _id = res[i]._id
-             that.all_accounts[_id] = res[i]
+             this.all_accounts[_id] = res[i]
          }
  
-         console.log(that.all_accounts)
+         console.log(this.all_accounts)
          console.log('accounts 加载完毕!')
      }
 
-     //逻辑业务
-    on_data(data, sock)
-    {  
-        this.sock = sock
-         //没有登陆的状态
-         if (!sock.account)
-        {
-             switch (data['operate'])
-            {
-                case 'register':
-                    this.create_account(data['data'], sock)
-                    break
-                case 'log_in':
-                    this.log_in(data['data'], sock)
-                    break
-                default:
-                    break;
-            }
-        }
+    //  //逻辑业务
+    // on_data(data, sock)
+    // {  
+    //     this.sock = sock
+    //      //没有登陆的状态
+    //      if (!sock.account)
+    //     {
+    //          switch (data['operate'])
+    //         {
+    //             case 'register':
+    //                 this.create_account(data['data'], sock)
+    //                 break
+    //             case 'log_in':
+    //                 this.log_in(data['data'], sock)
+    //                 break
+    //             default:
+    //                 break;
+    //         }
+    //     }
 
-        //登陆阶段
-        if (sock.account)
-        {
-            let account = sock.account
+    //     //登陆阶段
+    //     if (sock.account)
+    //     {
+    //         let account = sock.account
 
-            switch (data['operate'])
-            {
-                case 'delete_player':
-                    account.update_account('delete_player')
-                    break
-                case 'create_player':
-                    account.update_account('create_player',account.id)
-                    break
-                case 'log_out':
-                    account.log_out()
-                    break
-                default:
-                    break;
-            }
-        }
+    //         switch (data['operate'])
+    //         {
+    //             case 'delete_player':
+    //                 account.update_account('delete_player')
+    //                 break
+    //             case 'create_player':
+    //                 account.update_account('create_player',account.id)
+    //                 break
+    //             case 'log_out':
+    //                 account.log_out()
+    //                 break
+    //             default:
+    //                 break;
+    //         }
+    //     }
 
-    }
+    // }
 
-    async log_in(account_id_pwd,sock)
+    log_in(account_id_pwd,sock)
     {
         let [aid, pwd] = account_id_pwd
-        aid =Number.parseInt(aid)
         
+        aid =Number.parseInt(aid)
+
         let account = this.all_accounts[aid]
         if (account && account['pwd'] == pwd)
         {
-            //sock和account绑定关系
-            let account_data = {'id':account._id,'pwd':account.pwd,'player':account.player}
+            
+            let player = account.player
+
+            let account_data = {'id':aid,'pwd':pwd,'player':player}
             account = new Account(account_data,this.mongo)
+
+            //sock和account绑定关系
             sock.account = account
             account.set_sock(sock)
 
             console.log(`${sock.remoteAddress}:${sock.remotePort} 登陆成功`)
 
             //发包
-            this.send_sock('log_in', 1, {'id':aid,'pwd':pwd,'player':aid})
+            this.send_sock(sock,'log_in', 1, account_data)
         }
     }
     
@@ -111,26 +111,19 @@ class Account_manager
    async create_account(register_data, sock)
    {
        //整理数据
-       let pid = this.cur_max_pid += 1
-       let aid = pid
+       let aid = this.cur_max_aid += 1
 
-       let name = register_data[0]
-       let sex = register_data[1]
        let pwd = register_data[2]
 
-       let player_data = { '_id': pid, 'name': name, 'sex': sex, }
-       let account_data = { '_id': aid, 'pwd': pwd, 'player': pid }
+       let account_data = { '_id': aid, 'pwd': pwd, 'player': aid }
 
        try
        {
            // 创建account,保存进数据库
            await this.mongo.insert('accounts', account_data)
 
-           // 创建player,保存进数据库
-           await this.mongo.insert('players', player_data)
-
            //更新num数字
-           await this.mongo.update('max_pid', { _id: "get_pid" }, { $set: { pid: pid }})
+           await this.mongo.update('max_pid', { _id: "get_id" }, { $set: { aid: aid }})
        }
        catch(err)
        {
@@ -143,17 +136,17 @@ class Account_manager
        console.log(`${sock.remoteAddress}:${sock.remotePort} 注册成功`)
 
        //发包
-       this.send_sock('register', 1, account_data)
+       this.send_sock(sock,'register', 1, account_data)
    }
 
 
 
    //发包
-   send_sock(...args)
+   send_sock(sock,...args)
     {
         this.send_rec_obj.set(args[0], args[1], args[2])
         let send = this.send_rec_obj.get()
-        this.sock.write(JSON.stringify(send))
+        sock.write(JSON.stringify(send))
     }
 }
 
