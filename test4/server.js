@@ -18,7 +18,7 @@ class Server
         
         
     }
-    on_data(data, sock)
+    async on_data(data, sock)
     {
          //没有登陆的状态
          if (!sock.account)
@@ -26,8 +26,8 @@ class Server
             switch (data['operate'])
             {
                 case 'register':
-                    this.accounts_manager.create_account(data['data'], sock)
-                    this.players_manager.create_player(data['data'], sock)
+                await this.accounts_manager.create_account(data['data'], sock)
+                await this.players_manager.create_player(data['data'], sock)
                     break
                 case 'log_in':
                     this.accounts_manager.log_in(data['data'], sock)
@@ -52,7 +52,7 @@ class Server
                     break
                 case 'create_player':
                     this.players_manager.create_player(data['data'],sock)
-                    account.update_account('create_player',account.id)
+                    account.update_account('create_player')
                     break
                 case 'log_out':
                     player.log_out()

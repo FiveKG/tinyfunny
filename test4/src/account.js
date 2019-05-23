@@ -29,7 +29,7 @@ class Account
     }
 
     
-    async update_account(operate,data=null)
+    async update_account(operate)
     {
         switch(operate)
         {
@@ -37,7 +37,8 @@ class Account
                 this.player = null
                 break
             case 'create_player':
-                this.player = data
+
+                this.player = this.id
                 break
             default:
                 break

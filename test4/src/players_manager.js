@@ -4,19 +4,19 @@ class Players_manager
 {
     constructor(server)
     {
-        this.cur_max_aid = null
+        this.cur_max_pid = null
 
         this.send_rec_obj = server.send_rec_obj
         this.mongo = server.mongo
 
-        this.load_max_pid()
     }
 
      //获取id
      async load_max_pid()
      {
          let res =await this.mongo.find('max_pid', {})
-         this.cur_max_pid = res[0].pid
+         this.cur_max_pid = res[0].aid
+         return res[0].aid
      }
 
 
@@ -60,14 +60,14 @@ class Players_manager
 
     async create_player(player_data,sock)
     {   
-        let pid = this.cur_max_pid += 1
-        let[name,sex] = player_data
-        console.log(name,sex)
+        //获取id
+        let pid = await this.load_max_pid()
+        let[name,sex] = player_data 
 
         let player = new Player({id:pid,name:name,sex:sex},this.mongo)
         sock.player = player
         player.set_sock(sock)
-        
+
         let palyer_data = { '_id': pid, 'name': name, 'sex': sex}
 
         try
@@ -83,6 +83,8 @@ class Players_manager
         console.log(`${sock.remoteAddress}:${sock.remotePort} 创建玩家`)
         //发包
         this.send_sock(sock,'create_player',1,'创建玩家成功')
+
+        
     }
 
     send_sock(sock,...args)

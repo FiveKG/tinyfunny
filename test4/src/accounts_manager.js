@@ -19,9 +19,10 @@ class Account_manager
      {
          let res =await this.mongo.find('max_pid', {})
          this.cur_max_aid = res[0].aid
+
      }
  
-     //加载
+     //加载account
      async load_accounts()
      {
 
@@ -32,53 +33,10 @@ class Account_manager
              let _id = res[i]._id
              this.all_accounts[_id] = res[i]
          }
- 
+         
          console.log(this.all_accounts)
          console.log('accounts 加载完毕!')
      }
-
-    //  //逻辑业务
-    // on_data(data, sock)
-    // {  
-    //     this.sock = sock
-    //      //没有登陆的状态
-    //      if (!sock.account)
-    //     {
-    //          switch (data['operate'])
-    //         {
-    //             case 'register':
-    //                 this.create_account(data['data'], sock)
-    //                 break
-    //             case 'log_in':
-    //                 this.log_in(data['data'], sock)
-    //                 break
-    //             default:
-    //                 break;
-    //         }
-    //     }
-
-    //     //登陆阶段
-    //     if (sock.account)
-    //     {
-    //         let account = sock.account
-
-    //         switch (data['operate'])
-    //         {
-    //             case 'delete_player':
-    //                 account.update_account('delete_player')
-    //                 break
-    //             case 'create_player':
-    //                 account.update_account('create_player',account.id)
-    //                 break
-    //             case 'log_out':
-    //                 account.log_out()
-    //                 break
-    //             default:
-    //                 break;
-    //         }
-    //     }
-
-    // }
 
     log_in(account_id_pwd,sock)
     {
@@ -111,8 +69,8 @@ class Account_manager
    async create_account(register_data, sock)
    {
        //整理数据
-       let aid = this.cur_max_aid += 1
 
+       let aid = this.cur_max_aid += 1
        let pwd = register_data[2]
 
        let account_data = { '_id': aid, 'pwd': pwd, 'player': aid }
