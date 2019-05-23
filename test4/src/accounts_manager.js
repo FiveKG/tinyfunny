@@ -81,7 +81,7 @@ class Account_manager
            await this.mongo.insert('accounts', account_data)
 
            //更新num数字
-           await this.mongo.update('max_pid', { _id: "get_id" }, { $set: { aid: aid }})
+           await this.mongo.update('max_pid', { _id: "get_aid" }, { $set: { aid: aid }})
        }
        catch(err)
        {
