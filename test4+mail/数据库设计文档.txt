@@ -1,0 +1,14 @@
+db.accounts.insert({_id:1001,pwd:"123",player:1001})
+db.accounts.insert({_id:1002,pwd:"123",player:1002})
+
+db.players.insert({_id:1001,name:"aaa",sex:"female",mail_head:[1,2]})
+db.players.insert({_id:1002,name:"bbb",sex:"male",mail_head:[1,2]})
+
+db.mail_head.insert({_id:1,receiver:1001,sender:1002,send_time:"2019-05-24 11:09:06",checked:0,type:"commom",mail_body:1})
+db.mail_head.insert({_id:2,receiver:1002,sender:1001,send_time:"2019-05-24 11:11:10",checked:1,type:"official",mail_body:2})
+
+db.mail_body.insert({_id:1,content:"hello",extra_type:null,extra_data:null})
+db.mail_body.insert({_id:2,content:"word",extra_type:"gift",extra_data:"this is a gift"})
+
+db.max_id.insert({_id:"get_aid",aid:1002})
+db.max_id.insert({_id:"get_mid",mid:2})
