@@ -1,5 +1,6 @@
 let Players_manager = require('./src/players_manager')
 let Account_manager = require('./src/accounts_manager')
+let Mail_manager = require('./src/mail_manager')
 let Send_rec_format = require('./src/send_rec_format')
 let Network = require('./src/network')
 let MongoDB = require('./src/mongo')
@@ -14,9 +15,7 @@ class Server
         this.network.set_handler(this.on_data.bind(this))
         this.accounts_manager = new Account_manager(this)
         this.players_manager = new Players_manager(this)
-
-        
-        
+        this.mail_manager = new Mail_manager(this)
     }
     async on_data(data, sock)
     {
@@ -26,12 +25,13 @@ class Server
             switch (data['operate'])
             {
                 case 'register':
-                await this.accounts_manager.create_account(data['data'], sock)
-                await this.players_manager.create_player(data['data'], sock)
+                    await this.accounts_manager.create_account(data['data'], sock)
+                    await this.players_manager.create_player(data['data'], sock)
                     break
                 case 'log_in':
-                    this.accounts_manager.log_in(data['data'], sock)
-                    this.players_manager.log_in(sock)
+                    await this.accounts_manager.log_in(data['data'], sock)
+                    await this.players_manager.log_in(sock)
+                    await this.mail_manager.log_in(sock)
                     break
                 default:
                     break;
@@ -43,6 +43,7 @@ class Server
         {
             let account = sock.account
             let player = sock.player
+            let mail = sock.mail
 
             switch (data['operate'])
             {
@@ -57,12 +58,19 @@ class Server
                 case 'log_out':
                     player.log_out()
                     account.log_out()
+                    mail.log_out()
                     break
                 case 'find_player':
                     player.find_player(data['data'])
                     break
                 case 'update_name':
                     player.update_name(data['data'])
+                    break
+                case 'check_mail':
+                    mail.check_mail(data['data'])
+                    break
+                case 'send_mail':
+                    mail.send_mail(data['data'])
                     break
                 default:
                     break;

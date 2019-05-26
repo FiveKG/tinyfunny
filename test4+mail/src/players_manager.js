@@ -68,7 +68,7 @@ class Players_manager
         sock.player = player
         player.set_sock(sock)
 
-        let palyer_data = { '_id': pid, 'name': name, 'sex': sex}
+        let palyer_data = { '_id': pid, 'name': name, 'sex': sex,"mail_head":[]}
 
         try
         {

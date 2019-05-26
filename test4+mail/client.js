@@ -47,6 +47,12 @@ client.connect(port,host,function()
             case 'create_player':
                 create_player()
                 break
+            case 'check_mail':
+                check_mail()
+                break
+            case 'send_mail':
+                send_mail();
+                break
             case 'close':
                 client.destroy()
                 break
@@ -55,6 +61,48 @@ client.connect(port,host,function()
         }
     })
 })
+
+//发邮件
+function send_mail()
+{
+    let rows =4
+    let data = []//存储输入的数据
+    console.log('对方id:')
+    rl.on('line',function(line)
+    {
+        //将接下来的数据保存在数组并发送到服务端
+        data.push(line)
+
+        if(data.length == 1)
+        {
+            console.log('内容:')
+        }
+        if(data.length == 2)
+        {
+            console.log('附件gift/null：')
+        }
+        if(data.length == 3 && line =='null')
+        {
+            data.push('null')
+            //转载发送
+            send_rec_obj.set('send_mail',1,data)
+            let send  = send_rec_obj.get()
+            client.write(JSON.stringify(send))
+            return
+        }
+        if(data.length == 3 && line !='null')
+        {
+            console.log('gift1/gift2')
+        }   
+        if(data.length ==rows)
+        {
+            //转载发送
+            send_rec_obj.set('send_mail',1,data)
+            let send  = send_rec_obj.get()
+            client.write(JSON.stringify(send))
+        }
+    })
+}
 //登陆
 function log_in()
 {
@@ -98,6 +146,26 @@ function create_player()
             //转载发送
             send_rec_obj.set('create_player',1,data)
             let send  = send_rec_obj.get()
+            client.write(JSON.stringify(send))
+        }
+    })
+}
+
+//查看邮箱
+function check_mail()
+{
+    console.log("unread/readed/all")
+    let rows = 1//控制行数
+    let data = []
+    rl.on('line',function(line)
+    {
+        data.push(line)
+        //将接下来两行的数据保存在数组并发送到服务端
+        if(rows==data.length)
+        {
+            send_rec_obj.set('check_mail',1,data)
+            let send = send_rec_obj.get()
+         
             client.write(JSON.stringify(send))
         }
     })
@@ -273,6 +341,12 @@ client.on('data',function(data)
                 console.log(data['data'])
             }
         case 'create_player':
+            console.log(data['data'])
+            break
+        case 'check_mail':
+            console.log(data['data'])
+            break
+        case 'send_mail':
             console.log(data['data'])
             break
         default:

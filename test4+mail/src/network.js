@@ -17,6 +17,7 @@ class Network
         {
             sock.player = null
             sock.account = null
+            sock.mail = null
             function rec_data(data)
             {
                 data = JSON.parse(data)
