@@ -53,6 +53,12 @@ client.connect(port,host,function()
             case 'send_mail':
                 send_mail();
                 break
+            case 'show_mail_detail':
+                show_mail_detail()
+                break
+            case 'delete_mail':
+                delete_mail()
+                break
             case 'close':
                 client.destroy()
                 break
@@ -61,7 +67,44 @@ client.connect(port,host,function()
         }
     })
 })
-
+//删除邮件
+function delete_mail()
+{
+    let rows =1
+    let data = []
+    console.log('邮件id：')
+    rl.on('line',function(line)
+    {
+        data.push(line)
+        //将接下来两行的数据保存在数组并发送到服务端
+        if(rows==data.length)
+        {
+            send_rec_obj.set('delete_mail',1,data)
+            let send = send_rec_obj.get()
+         
+            client.write(JSON.stringify(send))
+        }
+    })
+}
+//查看详细邮件
+function show_mail_detail()
+{
+    let rows =1
+    let data = []
+    console.log('邮件id：')
+    rl.on('line',function(line)
+    {
+        data.push(line)
+        //将接下来两行的数据保存在数组并发送到服务端
+        if(rows==data.length)
+        {
+            send_rec_obj.set('show_mail_detail',1,data)
+            let send = send_rec_obj.get()
+         
+            client.write(JSON.stringify(send))
+        }
+    })
+}
 //发邮件
 function send_mail()
 {
@@ -154,7 +197,7 @@ function create_player()
 //查看邮箱
 function check_mail()
 {
-    console.log("unread/readed/all")
+    console.log("unread/readed/sended/all")
     let rows = 1//控制行数
     let data = []
     rl.on('line',function(line)
@@ -347,6 +390,21 @@ client.on('data',function(data)
             console.log(data['data'])
             break
         case 'send_mail':
+            console.log(data['data'])
+            break
+        case 'receive_mail':
+            console.log(data['data'])
+            break
+        case 'show_mail_detail':
+            console.log(data['data'])
+            break
+        case 'send_mail':
+            console.log(data['data'])
+            break
+        case 'delete_mail':
+            console.log(data['data'])
+            break
+        case 'init':
             console.log(data['data'])
             break
         default:

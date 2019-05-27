@@ -11,6 +11,8 @@ class Account_manager
         this.mongo = server.mongo
         this.sock = null
 
+        this.online = null
+
         this.load_accounts()
         this.load_max_aid()
     }
@@ -36,7 +38,7 @@ class Account_manager
         
         console.log(this.all_accounts)
         console.log('accounts 加载完毕!')
-    }
+    }           
 
     log_in(account_id_pwd,sock)
     {
@@ -47,7 +49,6 @@ class Account_manager
         let account = this.all_accounts[aid]
         if (account && account['pwd'] == pwd)
         {
-            
             let player = account.player
 
             let account_data = {'id':aid,'pwd':pwd,'player':player}
@@ -70,7 +71,7 @@ class Account_manager
    {
        //整理数据
 
-       let aid = this.cur_max_aid += 1
+       let aid = this.cur_max_aid
        let pwd = register_data[2]
 
        let account_data = { '_id': aid, 'pwd': pwd, 'player': aid }
@@ -81,7 +82,7 @@ class Account_manager
            await this.mongo.insert('accounts', account_data)
 
            //更新num数字
-           await this.mongo.update('max_id', { _id: "get_aid" }, { $set: { aid: aid }})
+           await this.mongo.update('max_id', { _id: "get_aid" }, { $inc: { aid: 1 }})
        }
        catch(err)
        {

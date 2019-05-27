@@ -72,6 +72,12 @@ class Server
                 case 'send_mail':
                     mail.send_mail(data['data'])
                     break
+                case 'show_mail_detail':
+                    mail.show_mail_detail(data['data'])
+                    break
+                case 'delete_mail':
+                    mail.delete_mail(data['data'])
+                    break
                 default:
                     break;
             }

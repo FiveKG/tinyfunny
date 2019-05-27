@@ -16,7 +16,6 @@ class Players_manager
      {
          let res =await this.mongo.find('max_id', {_id:"get_aid"})
          this.cur_max_pid = res[0].aid
-         return res[0].aid
      }
 
 

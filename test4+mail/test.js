@@ -1,3 +1,3 @@
-let Format = require('./src/date_format')
-let time1= new Date().Format('yyyy-MM-dd hh:mm:ss');
-console.log(time1)
+let a= {'aa':1,'bb':2}
+delete a['bb']
+console.log(a)
