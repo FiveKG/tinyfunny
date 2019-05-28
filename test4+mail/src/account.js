@@ -8,7 +8,7 @@ class Account
         this.player = player
         this.send_rec_obj = new Send_rec_format()
         this.mongo = mongo
-
+        this.account_handler = null
         this.sock = null
     }
 
@@ -17,10 +17,12 @@ class Account
         this.sock = sock
     }
 
-    //@param account<Account>
+
     async log_out()
     {
-        //断开联系
+        //退出online
+        this.account_handler('log_out',this.id)
+
         this.send_sock('log_out',1,'登出成功')
         console.log(`${this.sock.remoteAddress}:${this.sock.remotePort} 登出成功 `)
         
@@ -37,7 +39,6 @@ class Account
                 this.player = null
                 break
             case 'create_player':
-
                 this.player = this.id
                 break
             default:
@@ -69,6 +70,11 @@ class Account
         this.send_rec_obj.set(args[0], args[1], args[2])
         let send = this.send_rec_obj.get()
         this.sock.write(JSON.stringify(send))
+    }
+
+    set_handler(handler)
+    {
+        this.account_handler = handler
     }
 
 }

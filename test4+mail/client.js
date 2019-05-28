@@ -56,8 +56,11 @@ client.connect(port,host,function()
             case 'show_mail_detail':
                 show_mail_detail()
                 break
-            case 'delete_mail':
-                delete_mail()
+            case 'delete_one_mail':
+                delete_one_mail()
+                break
+            case 'delete_all_mails':
+                delete_all_mails()
                 break
             case 'close':
                 client.destroy()
@@ -67,8 +70,14 @@ client.connect(port,host,function()
         }
     })
 })
-//删除邮件
-function delete_mail()
+function delete_all_mails()
+{
+    send_rec_obj.set('delete_all_mails',1,null)
+    let send = send_rec_obj.get()
+    client.write(JSON.stringify(send))
+}
+//删除邮件一封
+function delete_one_mail()
 {
     let rows =1
     let data = []
@@ -247,21 +256,13 @@ function log_out()
 //注册
 function register()
 {
-    let rows =3
+    let rows =1
     let data = []//存储输入的数据
-    console.log('请输入名称:')
+    console.log('请输入密码:')
     rl.on('line',function(line)
     {
         //将接下来的数据保存在数组并发送到服务端
         data.push(line)
-        if(data.length == 1)
-        {
-            console.log('请输入性别(female/male):')
-        }
-        if(data.length == 2)
-        {
-            console.log('请输入密码:')
-        }
         if(data.length ==rows)
         {
             //转载发送

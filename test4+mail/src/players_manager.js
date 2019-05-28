@@ -19,12 +19,12 @@ class Players_manager
      }
 
 
-    async log_in(sock)
+    async init_player(sock)
     {
-        if (sock.account)
+        if(sock.account)
         { 
             let id =parseInt(sock.account.player)
-            if(id)
+            if(id)//如果该账号有player对象则初始化player，没有则提示创建
             {
                 try
                 {
@@ -59,16 +59,18 @@ class Players_manager
 
     async create_player(player_data,sock)
     {   
+        if(sock.player)
+        {
+            this.send_sock(sock,'create_player',0,'已有玩家角色')
+            return
+        }
+
         //获取id
-        let pid = await this.load_max_pid()
+        let pid = sock.account.id
         let[name,sex] = player_data 
-
-        let player = new Player({id:pid,name:name,sex:sex},this.mongo)
-        sock.player = player
-        player.set_sock(sock)
-
+    
+        //更新数据库
         let palyer_data = { '_id': pid, 'name': name, 'sex': sex,"mail_head":[]}
-
         try
         {
             await this.mongo.insert('players', palyer_data)
@@ -79,11 +81,13 @@ class Players_manager
             return
         }
 
+        //更新内存上account.player
+        sock.account.player = pid
+
+
         console.log(`${sock.remoteAddress}:${sock.remotePort} 创建玩家`)
         //发包
-        this.send_sock(sock,'create_player',1,'创建玩家成功')
-
-        
+        this.send_sock(sock,'create_player',1,'创建玩家成功')   
     }
 
     send_sock(sock,...args)

@@ -3,10 +3,10 @@ let format = require('./date_format')
 
 class Mail
 {
-    constructor(my_pid,mongo)
+    constructor(pid,mongo)
     {  
         this.cur_max_id =null
-        this.pid = my_pid
+        this.pid = pid
 
         this.type= 'commom'
 
@@ -25,9 +25,9 @@ class Mail
     }
 
     async get_mail_ids()
-    {
-            let res= await this.mongo.find_one("players",{_id:this.pid})
-            return res.mail_head
+    {   
+        let res= await this.mongo.find_one("players",{_id:this.pid})
+        return res.mail_head
     }
 
     async get_cur_max_mid()
@@ -82,18 +82,23 @@ class Mail
         try
         {
             let mail_ids = await this.get_mail_ids()
-            let head_array = []
+            let mail_array = []
             for(let i=0;i<mail_ids.length;i++)
             {
                 let temp = {}
                 temp._id = mail_ids[i]
-                head_array.push(temp)
+                mail_array.push(temp)
             }
-            
-            this.unread_mail_head = await this.mongo.find("mail_head",{checked:1,receiver:this.pid,$or:head_array},{projection:{index:0}})//未读信息
-            this.readed_mail_head = await this.mongo.find("mail_head",{checked:0,receiver:this.pid,$or:head_array},{projection:{index:0}})//已读信息
-            this.sended_mail_head = await this.mongo.find("mail_head",{send:this.pid,$or:head_array},{projection:{index:0}})//已发送信息
-            this.all_mail_head = await this.mongo.find("mail_head",{$or:head_array},{projection:{index:0}})
+
+            if(mail_array.length==0)//空邮箱
+            {
+                this.send_sock('init',1,`邮箱为空`)
+                return
+            }
+            this.unread_mail_head = await this.mongo.find("mail_head",{checked:1,receiver:this.pid,$or:mail_array},{projection:{index:0}})//未读信息
+            this.readed_mail_head = await this.mongo.find("mail_head",{checked:0,receiver:this.pid,$or:mail_array},{projection:{index:0}})//已读信息
+            this.sended_mail_head = await this.mongo.find("mail_head",{sender:this.pid,$or:mail_array},{projection:{index:0}})//已发送信息
+            this.all_mail_head = await this.mongo.find("mail_head",{$or:mail_array},{projection:{index:0}})
 
             let unread_mail_total = this.unread_mail_head.length
             if(unread_mail_total)
@@ -142,7 +147,7 @@ class Mail
     }
 
 
-    delete_mail(mail_id)
+    delete_one_mail(mail_id)
     {
         mail_id = Number.parseInt(mail_id[0])
         try
@@ -155,25 +160,44 @@ class Mail
             this.mongo.update('mail_body',{_id:mail_id},{$inc:{index:-1}})
 
             //删除mail_head和mail_body的索引值为0的数据
-            this.mongo.delete('mail_head',{index:0})
-            this.mongo.delete('mail_body',{index:0})
-            this.send_sock('delete_mail',1,'删除成功')
+            this.mongo.delete_many('mail_head',{index:0})
+            this.mongo.delete_many('mail_body',{index:0})
+            this.send_sock('delete_mail',1,'邮件删除成功')
         }
         catch(err)
         {
             console.log(err)
-            this.send_sock('delete_mail',0,'删除失败')
+            this.send_sock('delete_mail',0,'邮件删除失败')
         }
     }
 
-    log_out()
+    async delete_all_mails()
     {
-        //删除内存里的数据
-        this.mail_handler('log_out',this.pid)
+        
 
-        this.sock.mail = null
-        this.set_sock(null)
+        let mail_ids = await this.get_mail_ids()
+        let mail_array = []
+        for(let i=0;i<mail_ids.length;i++)
+        {
+            let temp = {}
+            temp._id = mail_ids[i]
+            mail_array.push(temp)
+        }
+
+        if(mail_array.length==0)//空邮箱
+        {
+            return
+        }
+        //mail_head和mail_body的索引值减1
+        this.mongo.update_many('mail_head',{$or:mail_array},{$inc:{index:-1}})
+        this.mongo.update_many('mail_body',{$or:mail_array},{$inc:{index:-1}})
+
+        //删除mail_head和mail_body的索引值为0的数据
+        this.mongo.delete_many('mail_head',{index:0})
+        this.mongo.delete_many('mail_body',{index:0})
+        this.send_sock('delete_mail',1,'邮件清空成功')
     }
+
 
     send_sock(...args)
     {

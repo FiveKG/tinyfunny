@@ -16,12 +16,12 @@ class MongoDB
         return db
     }
 
-    load(collention_name)
+    load(collection_name)
     {
         
         return this.db.then(function(db)
         {
-            let result = db.collection(collention_name).find({}).toArray()
+            let result = db.collection(collection_name).find({}).toArray()
             return result
         })
     }
@@ -29,47 +29,62 @@ class MongoDB
 
 
     // 查询接口
-    find(collention_name,cond,option=null)
+    find(collection_name,cond,option=null)
     {
         return this.db.then(function(db)
         {
-            return db.collection(collention_name).find(cond,option).toArray()
+            return db.collection(collection_name).find(cond,option).toArray()
         })
     }
 
     //查询单个
-    find_one(collention_name,cond,option=null)
+    find_one(collection_name,cond,option=null)
     {
         return this.db.then(function(db)
         {
-            return db.collection(collention_name).findOne(cond,option)
+            return db.collection(collection_name).findOne(cond,option)
         })
     }
 
-    //修改 
-    update(collention_name,cond, info)
+    //修改一个
+    update(collection_name,cond, info)
     {
         return this.db.then(function (db)
         {
-            return db.collection(collention_name).updateOne(cond, info)
+            return db.collection(collection_name).updateOne(cond, info)
         })
     }
-
-    //删除
-    delete(collention_name,cond)
+    //修改多个
+    update_many(collection_name,cond,info)
     {
         return this.db.then(function (db)
         {
-            return db.collection(collention_name).deleteOne(cond)
+            return db.collection(collection_name).updateMany(cond, info)
         })
     }
 
+    //删除一个
+    delete(collection_name,cond)
+    {
+        return this.db.then(function (db)
+        {
+            return db.collection(collection_name).deleteOne(cond)
+        })
+    }
+    //删除多个
+    delete_many(collection_name,cond)
+    {
+        return this.db.then(function (db)
+        {
+            return db.collection(collection_name).deleteMany(cond)
+        })
+    }
     //添加
-    insert(collention_name,cond)
+    insert(collection_name,cond)
     {
         return this.db.then(function(db)
         { 
-            return db.collection(collention_name).insertOne(cond)
+            return db.collection(collection_name).insertOne(cond)
         })
     }
 }

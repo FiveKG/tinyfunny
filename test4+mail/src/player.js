@@ -24,7 +24,6 @@ class Player
     //@param new_name<array>
     async update_name(new_name)
     {
-        let that = this
         this.name = new_name[0]
         if(this.name)
         {
@@ -34,8 +33,8 @@ class Player
                 await this.mongo.update('players',{ _id: this.id }, { $set: db })
 
                 //发包
-                that.send_sock("update_name",1,'更名成功')
-                console.log(`${that.sock.remoteAddress}:${that.sock.remotePort} 更名成功 `)
+                this.send_sock("update_name",1,'更名成功')
+                console.log(`${this.sock.remoteAddress}:${this.sock.remotePort} 更名成功 `)
             }
             catch(err)
             {
@@ -44,7 +43,7 @@ class Player
         }
         else
         {
-            that.send_sock("update_name",0,'名字不能为空')
+            this.send_sock("update_name",0,'名字不能为空')
 
         }
         
@@ -68,22 +67,15 @@ class Player
         {
             console.log(err)
         }
-
     }
 
-    log_out()
-    {
-        this.sock.player = null
-        this.set_sock(null)
-
-    }
 
     //@param player<Player>
     async delete_player()
     {
         try
         {
-            await this.mongo.delete('players',{_id:this.id},)
+            await this.mongo.delete('players',{_id:this.id})
         }
         catch(err)
         {
@@ -92,10 +84,10 @@ class Player
         }    
 
         //发包
-        this.send_sock("delete_player",1,'删除成功')
-        console.log(`${this.sock.remoteAddress}:${this.sock.remotePort} 删除成功 `)
+        this.send_sock("delete_player",1,'玩家删除成功!!')
+        console.log(`${this.sock.remoteAddress}:${this.sock.remotePort} 玩家删除成功 `)
 
-        this.log_out()
+        this.sock.player = null
     }
 
     send_sock(...args)

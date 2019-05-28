@@ -11,10 +11,24 @@ class Account_manager
         this.mongo = server.mongo
         this.sock = null
 
-        this.online = null
+        this.online = {}
+   
 
         this.load_accounts()
         this.load_max_aid()
+    }
+
+    on_data(option,data)//用于用户登出时删除online数据
+    {
+        switch(option)
+        {
+            case 'log_out':
+                delete this.online[data]
+                console.log(`在线玩家账号：${Object.keys(this.online)}`)
+                break
+            default:
+                break
+        }
     }
 
     //获取id
@@ -54,13 +68,28 @@ class Account_manager
             let account_data = {'id':aid,'pwd':pwd,'player':player}
             account = new Account(account_data,this.mongo)
 
+            //查看是否重复下线，有则踢下线
+            if(this.online.aid)
+            {
+                let sock = this.online.aid
+                this.send_sock(sock,'log_in',0,'重复登陆，被迫下线')
+                sock.account.log_out()
+                //内存中删除
+                delete this.online.aid
+            }
+
             //sock和account绑定关系
             sock.account = account
             account.set_sock(sock)
+            account.set_handler(this.on_data.bind(this))
+
+            //新登陆用户加载进内存
+            this.online[aid] = sock
+            console.log(`在线账号:${Object.keys(this.online)}`)
 
             console.log(`${sock.remoteAddress}:${sock.remotePort} 登陆成功`)
 
-            //发包
+            //发包 
             this.send_sock(sock,'log_in', 1, account_data)
         }
     }
@@ -72,9 +101,9 @@ class Account_manager
        //整理数据
 
        let aid = this.cur_max_aid
-       let pwd = register_data[2]
+       let pwd = register_data[0]
 
-       let account_data = { '_id': aid, 'pwd': pwd, 'player': aid }
+       let account_data = { '_id': aid, 'pwd': pwd, 'player': null }
 
        try
        {
@@ -97,8 +126,6 @@ class Account_manager
        //发包
        this.send_sock(sock,'register', 1, account_data)
    }
-
-
 
    //发包
    send_sock(sock,...args)

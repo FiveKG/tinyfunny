@@ -30,10 +30,6 @@ class Mail_manager
                     this.send_sock(sock,"receive_mail",1,`来自${sender}的新邮件。 ${send_time}`)
                 }
                 break
-            case 'log_out':
-                delete this.online[data]
-                console.log(`在线玩家账号：${Object.keys(this.online)}`)
-                break
             default:
                 break
         }
@@ -45,20 +41,24 @@ class Mail_manager
         this.cur_max_aid = res[0].aid
     }
 
-    async log_in(sock)
+    async init_mail(sock)
     {
-        if(sock.account)
+        if(sock.player)
         {
-            let aid = Number.parseInt(sock.account.id)
+            let pid = Number.parseInt(sock.player.id)
 
-            let mail = new Mail(aid,this.mongo)
+            let mail = new Mail(pid,this.mongo)
             sock.mail = mail
             mail.set_sock(sock)
 
             mail.set_handler(this.on_data.bind(this))
             //添加在线账号进内存
-            this.online[aid]=sock
-            console.log(`在线玩家账号：${Object.keys(this.online)}`)
+            this.online[pid]=sock
+            console.log(`邮件初始化成功：${Object.keys(this.online)}`)
+        }
+        else
+        {
+            console.log('玩家为空,跳过init_mail')
         }
     }
 

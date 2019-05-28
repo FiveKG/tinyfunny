@@ -19,6 +19,9 @@ class Server
     }
     async on_data(data, sock)
     {
+        let account = sock.account
+        let player = sock.player
+        let mail = sock.mail
          //没有登陆的状态
          if (!sock.account)
         {
@@ -26,12 +29,11 @@ class Server
             {
                 case 'register':
                     await this.accounts_manager.create_account(data['data'], sock)
-                    await this.players_manager.create_player(data['data'], sock)
                     break
                 case 'log_in':
                     await this.accounts_manager.log_in(data['data'], sock)
-                    await this.players_manager.log_in(sock)
-                    await this.mail_manager.log_in(sock)
+                    await this.players_manager.init_player(sock)
+                    await this.mail_manager.init_mail(sock)
                     break
                 default:
                     break;
@@ -41,24 +43,35 @@ class Server
         //登陆阶段
         if (sock.account)
         {
-            let account = sock.account
-            let player = sock.player
-            let mail = sock.mail
+            switch (data['operate'])
+            {
+                case 'create_player':
+                    if(sock.player)
+                    {
+                        break
+                    }
+                    await this.players_manager.create_player(data['data'],sock)
+                    await this.players_manager.init_player(sock)
+                    await this.mail_manager.init_mail(sock)
+                    await account.update_account('create_player')
+                    break
+                case 'log_out':
+                    account.log_out()
+                    break
+                default:
+                    break;
+            }
+        }
 
+        //登陆且有玩家角色
+        if(sock.account &&sock.player)
+        {
             switch (data['operate'])
             {
                 case 'delete_player':
-                    account.update_account('delete_player')
+                    mail.delete_all_mails()//清空邮箱
+                    account.update_account('delete_player')//account.player =null
                     player.delete_player()
-                    break
-                case 'create_player':
-                    this.players_manager.create_player(data['data'],sock)
-                    account.update_account('create_player')
-                    break
-                case 'log_out':
-                    player.log_out()
-                    account.log_out()
-                    mail.log_out()
                     break
                 case 'find_player':
                     player.find_player(data['data'])
@@ -76,7 +89,7 @@ class Server
                     mail.show_mail_detail(data['data'])
                     break
                 case 'delete_mail':
-                    mail.delete_mail(data['data'])
+                    mail.delete_one_mail(data['data'])
                     break
                 default:
                     break;
