@@ -90,7 +90,7 @@ class Account_manager
             console.log(`${sock.remoteAddress}:${sock.remotePort} 登陆成功`)
 
             //发包 
-            this.send_sock(sock,'log_in', 1, account_data)
+            this.send_sock(sock,'log_in', 1,'登陆成功')
         }
     }
     

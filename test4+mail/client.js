@@ -341,14 +341,7 @@ client.on('data',function(data)
    switch(data["operate"])
    {
         case 'log_in':
-            if(data["result"]==1)
-            {
-                log_in_success(data['data'])
-            }
-            else
-            {
-                console.log(data['data'])
-            }
+            console.log(data['data'])
             break
         case 'log_out':
             if(data['result']==1)
@@ -358,15 +351,8 @@ client.on('data',function(data)
             }
             break
         case 'register':
-            if(data['result']==1)
-            {
-                console.log('注册成功')
-                console.log(data['data'])
-            }
-            else
-            {
-                console.log(data['data'])
-            }
+            console.log('注册成功')
+            console.log(data['data'])
             break
         case 'find_player':
             console.log(data['data'])
@@ -375,15 +361,9 @@ client.on('data',function(data)
             console.log(data['data'])
             break
         case 'delete_player':
-            if(data['result']==1)
-            {
-                console.log(data['data'])
-                player=null
-            }
-            else
-            {
-                console.log(data['data'])
-            }
+            console.log(data['data'])
+            player=null
+            break
         case 'create_player':
             console.log(data['data'])
             break

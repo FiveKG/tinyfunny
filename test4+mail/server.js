@@ -46,7 +46,7 @@ class Server
             switch (data['operate'])
             {
                 case 'create_player':
-                    if(sock.player)
+                    if(sock.player)//防止重复创建玩家
                     {
                         break
                     }

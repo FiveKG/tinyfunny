@@ -1,0 +1,7 @@
+db.accounts.insert({_id:1001,pwd:"123",player:1001})
+db.accounts.insert({_id:1002,pwd:"123",player:1002})
+
+db.players.insert({_id:1001,name:"aaa",sex:"female"})
+db.players.insert({_id:1002,name:"bbb",sex:"male"})
+
+db.max_pid.insert({_id:"get_aid",aid:1002})

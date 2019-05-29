@@ -84,7 +84,7 @@ class Player
         }    
 
         //发包
-        this.send_sock("delete_player",1,'玩家删除成功!!')
+        this.send_sock("delete_player",1,'玩家删除成功')
         console.log(`${this.sock.remoteAddress}:${this.sock.remotePort} 玩家删除成功 `)
 
         this.sock.player = null

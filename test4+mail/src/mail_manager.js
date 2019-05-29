@@ -58,7 +58,7 @@ class Mail_manager
         }
         else
         {
-            console.log('玩家为空,跳过init_mail')
+            console.log(`${sock.remoteAddress}:${sock.remotePort} 玩家为空,跳过init_mail`)
         }
     }
 

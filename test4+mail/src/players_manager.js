@@ -11,12 +11,12 @@ class Players_manager
 
     }
 
-     //获取id
-     async load_max_pid()
-     {
-         let res =await this.mongo.find('max_id', {_id:"get_aid"})
-         this.cur_max_pid = res[0].aid
-     }
+    //获取id
+    async load_max_pid()
+    {
+        let res =await this.mongo.find('max_id', {_id:"get_aid"})
+        this.cur_max_pid = res[0].aid
+    }
 
 
     async init_player(sock)
@@ -59,12 +59,6 @@ class Players_manager
 
     async create_player(player_data,sock)
     {   
-        if(sock.player)
-        {
-            this.send_sock(sock,'create_player',0,'已有玩家角色')
-            return
-        }
-
         //获取id
         let pid = sock.account.id
         let[name,sex] = player_data 

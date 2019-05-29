@@ -49,6 +49,21 @@ class Mail
         let extra_type = send_data[2]
         let extra_data = send_data[3]
 
+        //查找收件玩家是否存在
+        try
+        {
+           let player = await this.mongo.find_one('players',{_id:receiver})
+           if(!player)
+           {
+               this.send_sock('send_mail',0,'玩家不存在')
+               return
+           }
+        }
+        catch(err)
+        {
+            console.log(err)
+        }
+        //更新数据库
         try
         {
             await this.get_cur_max_mid()//_id
@@ -92,7 +107,7 @@ class Mail
 
             if(mail_array.length==0)//空邮箱
             {
-                this.send_sock('init',1,`邮箱为空`)
+                this.send_sock('init',1,`邮箱初始化成功`)
                 return
             }
             this.unread_mail_head = await this.mongo.find("mail_head",{checked:1,receiver:this.pid,$or:mail_array},{projection:{index:0}})//未读信息
