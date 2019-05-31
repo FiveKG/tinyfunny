@@ -9,7 +9,6 @@ class Account_manager
         this.send_rec_obj = server.send_rec_obj
 
         this.mongo = server.mongo
-        this.sock = null
 
         this.online = {}
    

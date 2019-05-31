@@ -56,8 +56,8 @@ client.connect(port,host,function()
             case 'show_mail_detail':
                 show_mail_detail()
                 break
-            case 'delete_one_mail':
-                delete_one_mail()
+            case 'delete_mail':
+                delete_mail()
                 break
             case 'delete_all_mails':
                 delete_all_mails()
@@ -77,7 +77,7 @@ function delete_all_mails()
     client.write(JSON.stringify(send))
 }
 //删除邮件一封
-function delete_one_mail()
+function delete_mail()
 {
     let rows =1
     let data = []
